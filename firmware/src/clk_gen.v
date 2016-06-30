@@ -28,7 +28,8 @@
 module clk_gen    (U1_CLKIN_IN, 
                    U1_RST_IN,  
                    U1_CLKIN_IBUFG_OUT, 
-                   U1_CLK0_OUT, 
+                   U1_CLK0_OUT,
+                   U1_CLKDV_OUT, //16MHz				 
                    U1_STATUS_OUT, 
                    U2_CLKFX_OUT, 
                    U2_CLKDV_OUT, //10MHz
@@ -44,7 +45,7 @@ module clk_gen    (U1_CLKIN_IN,
    output wire U1_CLKIN_IBUFG_OUT;
    output wire U1_CLK0_OUT;
    output wire [7:0] U1_STATUS_OUT;
-   output wire U2_CLKDV_OUT;
+   output wire U2_CLKDV_OUT,U1_CLKDV_OUT;
    output wire U2_CLK0_OUT;
    output wire U2_CLK90_OUT;
    output wire U2_CLK2X_OUT;
@@ -55,7 +56,7 @@ module clk_gen    (U1_CLKIN_IN,
    wire U1_CLKIN_IBUFG;
    wire U1_CLK0_BUF;
    wire U1_LOCKED_INV_IN;
-   wire U2_CLKDV_BUF;
+   wire U2_CLKDV_BUF,U1_CLKDV_BUF;
    wire U2_CLKFB_IN; //160
    wire U2_CLKFX_BUF;
    wire U2_CLK0_BUF;
@@ -69,11 +70,11 @@ module clk_gen    (U1_CLKIN_IN,
    wire U2_OR3_O_OUT;
    wire U2_RST_IN;
    wire CLKFX_OUT;
-   
+   //// input freq=48MHz
    assign GND_BIT = 0;
    assign U1_CLKIN_IBUFG_OUT = U1_CLKIN_IBUFG;
    assign U2_CLK0_OUT = U2_CLKFB_IN;
-   DCM #( .CLK_FEEDBACK("1X"), .CLKDV_DIVIDE(4.0), .CLKFX_DIVIDE(3), 
+   DCM #( .CLK_FEEDBACK("1X"), .CLKDV_DIVIDE(3.0), .CLKFX_DIVIDE(3),  //DV_DIVIDE4->3
          .CLKFX_MULTIPLY(10), .CLKIN_DIVIDE_BY_2("FALSE"), 
          .CLKIN_PERIOD(20.833), .CLKOUT_PHASE_SHIFT("NONE"), 
          .DESKEW_ADJUST("SYSTEM_SYNCHRONOUS"), .DFS_FREQUENCY_MODE("LOW"), 
@@ -86,7 +87,7 @@ module clk_gen    (U1_CLKIN_IN,
                   .PSEN(GND_BIT), 
                   .PSINCDEC(GND_BIT), 
                   .RST(U1_RST_IN), 
-                  .CLKDV(), 
+                  .CLKDV(U1_CLKDV_BUF), 
                   .CLKFX(CLKFX_OUT), 
                   .CLKFX180(), 
                   .CLK0(U1_CLK0_BUF), 
@@ -127,6 +128,8 @@ module clk_gen    (U1_CLKIN_IN,
                               .O(U1_CLKIN_IBUFG));
    BUFG  U1_CLK0_BUFG_INST (.I(U1_CLK0_BUF), 
                            .O(U1_CLK0_OUT));
+	BUFG  U1_CLKDV_BUFG_INST (.I(U1_CLKDV_BUF), 
+                            .O(U1_CLKDV_OUT));
    INV  U1_INV_INST (.I(U1_LOCKED_INV_IN), 
                     .O(U2_LOCKED_INV_RST));
    BUFG  U2_CLKDV_BUFG_INST (.I(U2_CLKDV_BUF), 
