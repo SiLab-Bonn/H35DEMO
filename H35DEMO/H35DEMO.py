@@ -23,8 +23,8 @@ class H35DEMO():
         conf = self._preprocess_conf(conf)
         self.dut=Dut(conf)
         self.dut.init()
-        self.dut['CCPD_SPI_RX'].reset()
-        self.dut['CCPD_SPI_RX'].set_en(False)
+        self.dut['CCPD_CONF_A'].reset()
+        self.dut['CCPD_CONF_A'].set_en(False)
     
     def _preprocess_conf(self, conf):
         return conf
@@ -34,7 +34,8 @@ class H35DEMO():
         self.dut["CCPD_CONF_A"]["SPARE0"]=1
         self.dut["CCPD_CONF_A"][""]
         self.dut["CCPD_CONF_A"].write()
-    def show(self)
+    def show(self):
+        pass
 
 if __name__=="__main__":
     chip = H35DEMO()
