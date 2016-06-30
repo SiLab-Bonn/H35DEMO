@@ -1,7 +1,7 @@
+*~
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*$py.class
 
 # C extensions
 *.so
@@ -43,7 +43,6 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *,cover
-.hypothesis/
 
 # Translations
 *.mo
@@ -51,14 +50,6 @@ coverage.xml
 
 # Django stuff:
 *.log
-local_settings.py
-
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
 
 # Sphinx documentation
 docs/_build/
@@ -66,25 +57,18 @@ docs/_build/
 # PyBuilder
 target/
 
-# IPython Notebook
-.ipynb_checkpoints
+/firmware/ise/*
+!/firmware/ise/*.xise
+!/firmware/ise/*.bit
 
-# pyenv
-.python-version
+tests/fe65p2.sv
 
-# celery beat schedule file
-celerybeat-schedule
+*.vcd
+*.vcd.hier
 
-# dotenv
-.env
+tests/sim_build
+tests/results.xml
+tests/Makefile
 
-# virtualenv
-venv/
-ENV/
-
-# Spyder project settings
-.spyderproject
-
-# Rope project settings
-.ropeproject
-*~
+output_data
+*.lprof

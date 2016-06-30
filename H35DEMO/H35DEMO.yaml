@@ -6,7 +6,7 @@ transfer_layer:
   - name     : USB
     type     : SiUsb
     init     :
-        bit_file : ../firmware/bit/ccpdlf.bit
+        bit_file : ../firmware/bit/H35DEMO.bit
 
 
 hw_drivers:
@@ -201,6 +201,6 @@ registers:
         offset  : 1279
       - name    : DIGI
         size    : 80
-        offset  : 0
+        offset  : 79
 
 
