@@ -58,12 +58,16 @@
 `include "cmd_seq/cmd_seq.v"
 `include "cmd_seq/cmd_seq_core.v"
 
-`include "tdc_s3/tdc_s3.v"
-`include "tdc_s3/tdc_s3_core.v"
+//`include "tdc_s3/tdc_s3.v"
+//`include "tdc_s3/tdc_s3_core.v"
 
 `include "utils/3_stage_synchronizer.v"
 `include "rrp_arbiter/rrp_arbiter.v"
-`include "utils/ddr_des.v"
+
+//`include "utils/ddr_des.v"
+
+`include "utils/cdc_reset_sync.v"
+`include "utils/pulse_gen_rising.v"
 
 `ifdef COCOTB_SIM //for simulation
     `include "utils/IDDR_sim.v" 
@@ -72,6 +76,9 @@
     `include "utils/DCM_sim.v" 
     `include "utils/clock_multiplier.v"
     `include "utils/RAMB16_S1_S9_sim.v"
+    `include "utils/IBUFDS_sim.v"
+    `include "utils/IBUFGDS_sim.v"
+    `include "utils/OBUFDS_sim.v"
 `else
     `include "utils/IDDR_s3.v"
     `include "utils/ODDR_s3.v"
@@ -90,7 +97,7 @@ module H35DEMO (
     input wire WR_B,
     
     //high speed
-    inout wire [7:0] FDATA,
+    inout wire [7:0] FD,
     input wire FREAD,
     input wire FSTROBE,
     input wire FMODE,
@@ -110,7 +117,7 @@ module H35DEMO (
     output wire SRAM_CE1_B,
     output wire SRAM_OE_B,
     output wire SRAM_WE_B,
-	 
+     
     //FADC CONFIG
     output ADC_CSN,
     output ADC_SCLK,
@@ -126,34 +133,34 @@ module H35DEMO (
 
     input [3:0] ADC_OUT_P,
     input [3:0] ADC_OUT_N,
-	 
+     
     // Triggers
     input wire [2:0] LEMO_RX,
     output wire [2:0] TX, // TX[0] == RJ45 trigger clock output, TX[1] == RJ45 busy output
     input wire RJ45_RESET,
     input wire RJ45_TRIGGER,
-	 
-	 //FEI4
-	 input wire MONHIT,       //DIN1
-	 input wire DOBOUT,
-	 output wire CMD_DATA,
-	 output wire CMD_CLK,
+     
+     //FEI4
+     input wire MONHIT,       //DIN1
+     input wire DOBOUT,
+     output wire CMD_DATA,
+     output wire CMD_CLK,
 
     // CCPD
     input wire CCPD_BSOUT,       //DIN2
     input wire CCPD_ASOUT,       //DIN3
     input wire CCPD_SOUT,       //DIN4
     input wire CCPD_NSOUT,       //DIN5
-	 output wire CCPD_CK2,        //DOUT0
+    output wire CCPD_CK2,        //DOUT0
     output wire CCPD_SIN,       //DOUT1
     output wire CCPD_LD,    //DOUT2
     output wire CCPD_RB,    //DOUT3
     output wire CCPD_CK1,   //DOUT4
     output wire CCPD_BSIN,  //DOUT5
     output wire CCPD_ASIN,  //DOUT6
-	 output wire CCPD_NSIN,  //DOUT7
+    output wire CCPD_NSIN,  //DOUT7
 
-	 output wire CCPD_INJECTION, //INJ
+    output wire CCPD_INJECTION, //INJ
     output wire [3:0] CCPD_DEBUG,     //DEBUG DOUT9, 10, 11, 12
 
     // I2C
@@ -209,7 +216,7 @@ clk_gen iclkgen(
     .U1_RST_IN(1'b0),
     .U1_CLKIN_IBUFG_OUT(),
     .U1_CLK0_OUT(BUS_CLK), // DCM1: 48MHz USB/SRAM clock
-	 .U1_CLKDV_OUT(DATA_CLK), //DCM1: 16MHz FEI4 data clock
+     .U1_CLKDV_OUT(DATA_CLK), //DCM1: 16MHz FEI4 data clock
     .U1_STATUS_OUT(),
     .U2_CLKFX_OUT(CLK_40),  // DCM2: 40MHz FEI4 command clock
     .U2_CLKDV_OUT(ADC_ENC), // DCM2: 10MH adc
@@ -285,10 +292,18 @@ localparam CCPD_TDC_HIGHADDR = 16'h917f;
 
 // -------  BUS SYGNALING  ------- //
 wire [15:0] BUS_ADD;
-assign BUS_ADD = ADD - 16'h4000;
 wire BUS_RD, BUS_WR;
-assign BUS_RD = ~RD_B;
-assign BUS_WR = ~WR_B;
+fx2_to_bus i_fx2_to_bus (
+    .ADD(ADD),
+    .RD_B(RD_B),
+    .WR_B(WR_B),
+
+    .BUS_CLK(BUS_CLK),
+    .BUS_ADD(BUS_ADD),
+    .BUS_RD(BUS_RD),
+    .BUS_WR(BUS_WR)
+);
+
 
 // -------  USER MODULES  ------- //
 wire FIFO_NOT_EMPTY; // raised, when SRAM FIFO is not empty
@@ -320,7 +335,7 @@ cmd_seq
     
     .CMD_CLK_OUT(CMD_CLK),
     .CMD_CLK_IN(CLK_40),
-	 
+     
     .CMD_EXT_START_FLAG(CMD_EXT_START_FLAG),
     .CMD_EXT_START_ENABLE(CMD_EXT_START_ENABLE),
 
@@ -411,10 +426,10 @@ tlu_controller #(
     
     .TRIGGER(8'b0),
     .TRIGGER_VETO({7'b0,FIFO_FULL}),
-	 
+     
     .TRIGGER_ACKNOWLEDGE(TRIGGER_ACKNOWLEDGE_FLAG),
     .TRIGGER_ACCEPTED_FLAG(TRIGGER_ACCEPTED_FLAG),
-	 
+     
     .TLU_TRIGGER(RJ45_TRIGGER),
     .TLU_RESET(RJ45_RESET),
     .TLU_BUSY(TLU_BUSY),
@@ -437,17 +452,17 @@ wire ADC_EN;
         .MEM_BYTES(2) 
     )  i_spi_adc
     (
-		 .BUS_CLK(BUS_CLK),
-		 .BUS_RST(BUS_RST),
-		 .BUS_ADD(BUS_ADD),
-		 .BUS_DATA(BUS_DATA),
-		 .BUS_RD(BUS_RD),
-		 .BUS_WR(BUS_WR),
-		 .SPI_CLK(ADC_ENC),
-		 
-		 .EXT_START(1'b0),
+         .BUS_CLK(BUS_CLK),
+         .BUS_RST(BUS_RST),
+         .BUS_ADD(BUS_ADD),
+         .BUS_DATA(BUS_DATA),
+         .BUS_RD(BUS_RD),
+         .BUS_WR(BUS_WR),
+         .SPI_CLK(ADC_ENC),
+         
+         .EXT_START(1'b0),
 
-		 .SCLK(ADC_SCLK),
+         .SCLK(ADC_SCLK),
        .SDI(ADC_SDI),
        .SDO(ADC_SD0),
        .SEN(ADC_EN),
@@ -459,7 +474,7 @@ wire ADC_EN;
     gpac_adc_iobuf i_gpac_adc_iobuf
     (
         .ADC_CLK(RX_CLK),
-		  
+          
         .ADC_DCO_P(ADC_DCO_P), .ADC_DCO_N(ADC_DCO_N),
         .ADC_DCO(ADC_DCO),
     
@@ -478,7 +493,7 @@ wire ADC_EN;
     );
 
     wire [13:0] ADC_TH;
-	 wire NC,ADC_TRIG_SW;
+     wire NC,ADC_TRIG_SW;
     gpio #(
          .BASEADDR(CCPD_GPIO_TH_BASEADDR),
          .HIGHADDR(CCPD_GPIO_TH_HIGHADDR),
@@ -493,26 +508,26 @@ wire ADC_EN;
         .BUS_WR(BUS_WR),
         .IO({NC,ADC_TRIG_SW, ADC_TH})
      );
-	  
-    wire [31:0] FIFO_DATA_ADC;
+      
+    wire [31:0] FIFO_DATA_ADC [3:0];
     wire [3:0] ADC_SYNC;
-	 wire [3:0] FIFO_EMPTY_ADC;
-	 wire [3:0] FIFO_READ_ADC;
-	 wire [3:0] ADC_ERROR;	 
-	 wire ADC_TRIG_GATE,ADC_TRIG_TH,ADC_TRIGGER;
-	 reg CCPD_PULSE_GATE_RISING_FF,adc_trig_ff;
-	 always @ (posedge ADC_ENC)
-	 begin
-		 CCPD_PULSE_GATE_RISING_FF <= CCPD_PULSE_GATE;
-	 end
-	 assign ADC_TRIG_GATE = CCPD_PULSE_GATE & ~CCPD_PULSE_GATE_RISING_FF; //rising edge
+     wire [3:0] FIFO_EMPTY_ADC;
+     wire [3:0] FIFO_READ_ADC;
+     wire [3:0] ADC_ERROR;     
+     wire ADC_TRIG_GATE,ADC_TRIG_TH,ADC_TRIGGER;
+     reg CCPD_PULSE_GATE_RISING_FF,adc_trig_ff;
+     always @ (posedge ADC_ENC)
+     begin
+         CCPD_PULSE_GATE_RISING_FF <= CCPD_PULSE_GATE;
+     end
+     assign ADC_TRIG_GATE = CCPD_PULSE_GATE & ~CCPD_PULSE_GATE_RISING_FF; //rising edge
 
     always@(posedge ADC_ENC)
         adc_trig_ff <= ADC_IN[0] > ADC_TH;
     assign ADC_TRIG_TH = ADC_IN[0] > ADC_TH && adc_trig_ff == 0;
-	 assign ADC_TRIGGER=ADC_TRIG_SW ? ADC_TRIG_GATE : ADC_TRIG_GATE;
-	 assign ADC_SYNC = 4'b0000;
-	 
+     assign ADC_TRIGGER=ADC_TRIG_SW ? ADC_TRIG_GATE : ADC_TRIG_GATE;
+     assign ADC_SYNC = 4'b0000;
+     
     genvar i;
     generate
     for (i = 0; i < 4; i = i + 1) begin: adc_gen
@@ -528,7 +543,7 @@ wire ADC_EN;
             .ADC_IN(ADC_IN[i]),
 
             .ADC_SYNC(ADC_SYNC[i]),
-				.ADC_TRIGGER(ADC_TRIGGER),
+                .ADC_TRIGGER(ADC_TRIGGER),
 
             .BUS_CLK(BUS_CLK),
             .BUS_RST(BUS_RST),
@@ -536,7 +551,7 @@ wire ADC_EN;
             .BUS_DATA(BUS_DATA),
             .BUS_RD(BUS_RD),
             .BUS_WR(BUS_WR), 
-				
+                
             .FIFO_READ(FIFO_READ_ADC[i]),
             .FIFO_EMPTY(FIFO_EMPTY_ADC[i]),
             .FIFO_DATA(FIFO_DATA_ADC[i]),
@@ -544,10 +559,11 @@ wire ADC_EN;
             .LOST_ERROR(ADC_ERROR[i])
         );
       end
-		endgenerate
-		
+        endgenerate
+        
 //////////////////////
 // CCPD
+assign CCPD_RB=1'b1;
 wire [7:0] NC_CCPD_GPIO;
 gpio 
 #( 
@@ -618,6 +634,7 @@ begin
 end
 assign CCPD_CK1=CCPD_SPI_CLK & ~CCPD_SPI_FF[1];
 assign CCPD_CK2=CCPD_SPI_FF[2] & ~CCPD_SPI_FF[3];
+assign CCPD_LD = CCPD_ALD; //TODO for 4 matrixes
 
 spi
 #(         
@@ -625,13 +642,13 @@ spi
     .HIGHADDR(CCPD_SPI_HIGHADDR),
     .MEM_BYTES(356) 
 ) i_ccpd_spi (
-		 .BUS_CLK(BUS_CLK),
-		 .BUS_RST(BUS_RST),
-		 .BUS_ADD(BUS_ADD),
-		 .BUS_DATA(BUS_DATA),
-		 .BUS_RD(BUS_RD),
-		 .BUS_WR(BUS_WR),
-		
+         .BUS_CLK(BUS_CLK),
+         .BUS_RST(BUS_RST),
+         .BUS_ADD(BUS_ADD),
+         .BUS_DATA(BUS_DATA),
+         .BUS_RD(BUS_RD),
+         .BUS_WR(BUS_WR),
+        
     .SPI_CLK(CCPD_SPI_CLK),
     .EXT_START(CCPD_PULSE_GATE),
 
@@ -639,7 +656,7 @@ spi
     .SDI(CCPD_SIN),
     .SDO(CCPD_SOUT),
     .SEN(),
-    .SLD(CCPD_LD)
+    .SLD(CCPD_SLD)
 );
 spi
 #(         
@@ -647,12 +664,12 @@ spi
     .HIGHADDR(CCPD_SPI_A_HIGHADDR),
     .MEM_BYTES(356) 
 ) i_ccpd_spi_a (
-		 .BUS_CLK(BUS_CLK),
-		 .BUS_RST(BUS_RST),
-		 .BUS_ADD(BUS_ADD),
-		 .BUS_DATA(BUS_DATA),
-		 .BUS_RD(BUS_RD),
-		 .BUS_WR(BUS_WR),
+         .BUS_CLK(BUS_CLK),
+         .BUS_RST(BUS_RST),
+         .BUS_ADD(BUS_ADD),
+         .BUS_DATA(BUS_DATA),
+         .BUS_RD(BUS_RD),
+         .BUS_WR(BUS_WR),
 
     .SPI_CLK(CCPD_SPI_CLK),
     .EXT_START(CCPD_PULSE_GATE),
@@ -661,7 +678,7 @@ spi
     .SDI(CCPD_ASIN),
     .SDO(CCPD_ASOUT),
     .SEN(),
-    .SLD()
+    .SLD(CCPD_ALD)
 );
 spi
 #(         
@@ -669,12 +686,12 @@ spi
     .HIGHADDR(CCPD_SPI_B_HIGHADDR),
     .MEM_BYTES(356) 
 ) i_ccpd_spi_b (
-		 .BUS_CLK(BUS_CLK),
-		 .BUS_RST(BUS_RST),
-		 .BUS_ADD(BUS_ADD),
-		 .BUS_DATA(BUS_DATA),
-		 .BUS_RD(BUS_RD),
-		 .BUS_WR(BUS_WR),
+         .BUS_CLK(BUS_CLK),
+         .BUS_RST(BUS_RST),
+         .BUS_ADD(BUS_ADD),
+         .BUS_DATA(BUS_DATA),
+         .BUS_RD(BUS_RD),
+         .BUS_WR(BUS_WR),
 
     .SPI_CLK(CCPD_SPI_CLK),
     .EXT_START(CCPD_PULSE_GATE),
@@ -683,7 +700,7 @@ spi
     .SDI(CCPD_BSIN),
     .SDO(CCPD_BSOUT),
     .SEN(),
-    .SLD()
+    .SLD(CCPD_BLD)
 );
 spi 
 #(         
@@ -705,7 +722,7 @@ spi
     .SDI(CCPD_NSIN),
     .SDO(CCPD_NSOUT),
     .SEN(),
-    .SLD()
+    .SLD(CCPD_NLD)
 );
 
 // TDC
@@ -723,7 +740,7 @@ tdc_s3
     .DV_CLK(CLK_40),
     .TDC_IN(CCPD_TDC),
     .TDC_OUT(TDC_TDC_OUT),
-	 
+     
     .TRIG_IN(LEMO_RX[0]),
     .TRIG_OUT(TDC_TRIG_OUT),
 
@@ -793,7 +810,7 @@ sram_fifo
     .SRAM_WE_B(SRAM_WE_B),
 
     .USB_READ(USB_READ),
-    .USB_DATA(FDATA),
+    .USB_DATA(FD),
 
     .FIFO_READ_NEXT_OUT(ARB_READY_OUT),
     .FIFO_EMPTY_IN(!ARB_WRITE_OUT),
@@ -834,5 +851,6 @@ assign CCPD_DEBUG[0] = CCPD_GATE; //DOUT 9
 assign CCPD_DEBUG[1] = adc_trig_ff; //TRIGGER_ACKNOWLEDGE_FLAG; //DOUT10
 assign CCPD_DEBUG[2] = ADC_TRIGGER; //DOUT11
 assign CCPD_DEBUG[3] = CCPD_GATE_EXT_START; //DOUT12
+
 
 endmodule
