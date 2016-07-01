@@ -3,22 +3,14 @@
  * Copyright (c) All rights reserved 
  * SiLab , Physics Institute of Bonn University , All Right 
  * ------------------------------------------------------------
- *
- * SVN revision information:
- *  $Rev::                       $:
- *  $Author::                    $:
- *  $Date::                      $:
  */
  
 `timescale 1ps / 1ps
 `default_nettype none
 
-
-
 `include "clk_gen.v"
 
 //BASIL includes
-`include "utils/bus_to_ip.v"
 `include "gpio/gpio.v"
 
 `include "spi/spi.v"
@@ -34,8 +26,8 @@
 `include "fei4_rx/rec_sync.v"
 `include "fei4_rx/decode_8b10b.v"
 `include "fei4_rx/fei4_rx.v"
-`include "utils/flag_domain_crossing.v"
 
+`include "utils/flag_domain_crossing.v"
 `include "utils/cdc_syncfifo.v"
 `include "utils/generic_fifo.v"
 `include "utils/cdc_pulse_sync.v"
@@ -43,6 +35,10 @@
 `include "utils/clock_divider.v"
 `include "utils/fx2_to_bus.v"
 `include "utils/reset_gen.v"
+`include "utils/bus_to_ip.v"
+`include "utils/cdc_reset_sync.v"
+`include "utils/pulse_gen_rising.v"
+`include "utils/3_stage_synchronizer.v"
 
 `include "pulse_gen/pulse_gen.v"
 `include "pulse_gen/pulse_gen_core.v"
@@ -61,13 +57,7 @@
 //`include "tdc_s3/tdc_s3.v"
 //`include "tdc_s3/tdc_s3_core.v"
 
-`include "utils/3_stage_synchronizer.v"
 `include "rrp_arbiter/rrp_arbiter.v"
-
-//`include "utils/ddr_des.v"
-
-`include "utils/cdc_reset_sync.v"
-`include "utils/pulse_gen_rising.v"
 
 `ifdef COCOTB_SIM //for simulation
     `include "utils/IDDR_sim.v" 

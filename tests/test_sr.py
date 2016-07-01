@@ -42,10 +42,10 @@ class TestSimSr(unittest.TestCase):
     @mock.patch('H35DEMO.H35DEMO._preprocess_conf', autospec=True, side_effect=lambda *args, **kwargs: _preprocess_conf(*args, **kwargs)) #change interface to SiSim
     def test_sr(self, mock_preprocess):
     
-        self.dut = H35DEMO()
-        self.dut.init()
+        self.chip = H35DEMO()
+        self.chip.init()
 
-        ret = self.dut['SRAM'].get_data()
+        ret = self.chip.dut['SRAM'].get_data()
         print ret
 
         '''
@@ -89,7 +89,7 @@ class TestSimSr(unittest.TestCase):
 
         
     def tearDown(self):
-        self.dut.close()
+        self.chip.dut.close()
         time.sleep(1)
         cocotb_compile_clean()
 

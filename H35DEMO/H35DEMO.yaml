@@ -96,110 +96,127 @@ registers:
     hw_driver   : ccpd_spi_a
     size        : 1491
     fields:
-      - name    : SPARE0
-        size    : 1
-        offset  : 1490
       - name    : DACOut0
         size    : 6
-        offset  : 1489
-      - name    : SPARE1
+        offset  : 1490
+      - name    : SPARE0
         size    : 1
-        offset  : 1483
+        offset  : 1484
+
       - name    : DACOut1
         size    : 6
-        offset  : 1482
-      - name    : SPARE2
+        offset  : 1483
+      - name    : SPARE1
         size    : 1
-        offset  : 1476
+        offset  : 1477
+
       - name    : DACOut2
         size    : 6
-        offset  : 1475
-      - name    : SPARE3
+        offset  : 1476
+      - name    : SPARE2
         size    : 1
-        offset  : 1469
+        offset  : 1470
+
       - name    : DACOut3
         size    : 6
-        offset  : 1468
-      - name    : SPARE4
+        offset  : 1469
+      - name    : SPARE3
         size    : 1
-        offset  : 1462
+        offset  : 1463
+
       - name    : DACOut4
         size    : 6
-        offset  : 1461
-      - name    : SPARE5
+        offset  : 1462
+      - name    : SPARE4
         size    : 1
-        offset  : 1455
+        offset  : 1456
+
       - name    : DACOut5
         size    : 6
-        offset  : 1454
-      - name    : SPARE6
+        offset  : 1455
+      - name    : SPARE5
         size    : 1
-        offset  : 1448
+        offset  : 1449
+
       - name    : BLR
         size    : 6
-        offset  : 1447
-      - name    : SPARE7
+        offset  : 1448
+      - name    : SPARE6
         size    : 1
-        offset  : 1441
+        offset  : 1442
+
       - name    : VNBias
         size    : 6
-        offset  : 1440
-      - name    : SPARE8
+        offset  : 1441
+      - name    : SPARE7
         size    : 1
-        offset  : 1434
+        offset  : 1435
+
       - name    : VNFB
         size    : 6
-        offset  : 1433
-      - name    : SPARE9
+        offset  : 1434
+      - name    : SPARE8
         size    : 1
-        offset  : 1427
+        offset  : 1428
+
       - name    : DACOut9
         size    : 6
-        offset  : 1426
-      - name    : SPARE10
+        offset  : 1427
+      - name    : SPARE9
         size    : 1
-        offset  : 1420
+        offset  : 1421
+
       - name    : DACOut10
         size    : 6
-        offset  : 1419
-      - name    : SPARE11
+        offset  : 1420
+      - name    : SPARE10
         size    : 1
-        offset  : 1413
+        offset  : 1414
+
       - name    : DACOut11
         size    : 6
-        offset  : 1412
-      - name    : SPARE12
+        offset  : 1413
+      - name    : SPARE11
         size    : 1
-        offset  : 1406
+        offset  : 1407
+
       - name    : VNLogic
         size    : 6
-        offset  : 1405
+        offset  : 1406
+      - name    : SPARE12
+        size    : 1
+        offset  : 1400
+
+      - name    : VPLoad
+        size    : 6
+        offset  : 1399
       - name    : SPARE13
         size    : 1
-        offset  : 1399
-      - name    : LPLoad
-        size    : 6
-        offset  : 1398
-      - name    : SPARE14
-        size    : 1
-        offset  : 1392
+        offset  : 1393
+
       - name    : VNSF
         size    : 6
-        offset  : 1391
-      - name    : SPARE15
+        offset  : 1392
+      - name    : SPARE14
         size    : 1
-        offset  : 1385
+        offset  : 1386
+
       - name    : VP
         size    : 6
-        offset  : 1384
-      - name    : EnCCPD
+        offset  : 1385
+      - name    : SPARE15
         size    : 1
-        offset  : 1378
+        offset  : 1379
+
       - name    : VPAB
         size    : 6
-        offset  : 1377
+        offset  : 1378
+      - name    : EnCCPD
+        size    : 1
+        offset  : 1372
+
       - name    : ROW
-        size    : 92
+        size    : 4
         repeat  : 8
         offset  : 1371
         fields  :
@@ -216,7 +233,7 @@ registers:
               size    : 1
               offset  : 3
       - name    : COL
-        size    : 1200
+        size    : 4
         offset  : 1279
         repeat  : 300
         fields  :
