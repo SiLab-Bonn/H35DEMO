@@ -13,9 +13,9 @@ import yaml
 import mock
 import time
 
-sys.path.append("../")
+sys.path.append("../H35DEMO")
 
-from H35DEMO.H35DEMO import H35DEMO
+from H35DEMO import H35DEMO
 
 def _preprocess_conf(self, conf):
     
@@ -39,7 +39,7 @@ class TestSimSr(unittest.TestCase):
             include_dirs = (proj_dir, proj_dir + "/firmware/src"),
         )
         
-    @mock.patch('H35DEMO.H35DEMO.H35DEMO._preprocess_conf', autospec=True, side_effect=lambda *args, **kwargs: _preprocess_conf(*args, **kwargs)) #change interface to SiSim
+    @mock.patch('H35DEMO.H35DEMO._preprocess_conf', autospec=True, side_effect=lambda *args, **kwargs: _preprocess_conf(*args, **kwargs)) #change interface to SiSim
     def test_sr(self, mock_preprocess):
     
         self.dut = H35DEMO()

@@ -202,36 +202,36 @@ registers:
         size    : 92
         repeat  : 8
         offset  : 1371
-            -name    : RamId
-             size    : 1
-             offset  : 0
-            -name    : Ampout
-             size    : 1
-             offset  : 1
-            -name    : AmpToTest
-             size    : 1
-             offset  : 2
-            -name    : InjEn
-             size    : 1
-             offset  : 3
+        fields  :
+            - name    : RamId
+              size    : 1
+              offset  : 0
+            - name    : Ampout
+              size    : 1
+              offset  : 1
+            - name    : AmpToTest
+              size    : 1
+              offset  : 2
+            - name    : InjEn
+              size    : 1
+              offset  : 3
       - name    : COL
         size    : 1200
         offset  : 1279
         repeat  : 300
-            -name    : MUX
-             size    : 1
-             offset  : 0
-            -name    : InjEn
-             size    : 1
-             offset  : 1
-            -name    : TestToAnaBuf
-             size    : 1
-             offset  : 2
-            -name    : CaliAnaBuf
-             size    : 1
-             offset  : 3
+        fields  :
+            - name    : MUX
+              size    : 1
+              offset  : 0
+            - name    : InjEn
+              size    : 1
+              offset  : 1
+            - name    : TestToAnaBuf
+              size    : 1
+              offset  : 2
+            - name    : CaliAnaBuf
+              size    : 1
+              offset  : 3
       - name    : DIGI
         size    : 80
         offset  : 79
-
-
