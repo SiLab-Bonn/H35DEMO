@@ -205,14 +205,14 @@ clk_gen iclkgen(
     .U1_CLKIN_IN(FCLK_IN),
     .U1_RST_IN(1'b0),
     .U1_CLKIN_IBUFG_OUT(),
-    .U1_CLK0_OUT(BUS_CLK), // DCM1: 48MHz USB/SRAM clock
+    .U1_CLK0_OUT(BUS_CLK),    // DCM1: 48MHz USB/SRAM clock
      .U1_CLKDV_OUT(DATA_CLK), //DCM1: 16MHz FEI4 data clock
     .U1_STATUS_OUT(),
-    .U2_CLKFX_OUT(CLK_40),  // DCM2: 40MHz FEI4 command clock
-    .U2_CLKDV_OUT(ADC_ENC), // DCM2: 10MH adc
-    .U2_CLK0_OUT(RX_CLK),   // DCM2: 160MHz data clock ADC clock
+    .U2_CLKFX_OUT(CLK_40),    // DCM2: 40MHz FEI4 command clock
+    .U2_CLKDV_OUT(ADC_ENC),   // DCM2: 10MH adc
+    .U2_CLK0_OUT(RX_CLK),     // DCM2: 160MHz data clock ADC clock
     .U2_CLK90_OUT(),
-    .U2_CLK2X_OUT(RX_CLK2X), // DCM2: 320MHz data recovery clock
+    .U2_CLK2X_OUT(RX_CLK2X),  // DCM2: 320MHz data recovery clock
     .U2_LOCKED_OUT(CLK_LOCKED),
     .U2_STATUS_OUT()
 );
@@ -608,29 +608,30 @@ pulse_gen
 );
 // SPIs
 wire CCPD_SLD,CCPD_ALD,CCPD_BLD,CCPD_NLD;
+wire CCPD_SEN,CCPD_AEN,CCPD_BEN,CCPD_NEN;
 wire CCPD_SPI_CLK_CE;
 reg [7:0] CCPD_SPI_FF;
-clock_divider #(   /// TODO if 10MHz works, merge with ADC_ENC is better
+clock_divider #(   
     .DIVISOR(8) //
 ) i_clock_divisor_spi (
-    .CLK(CLK_40),
+    .CLK(ADC_ENC), // 10MHz
     .RESET(1'b0),
     .CE(CCPD_SPI_CLK_CE),
     .CLOCK(CCPD_SPI_CLK)
 );
 always@(posedge ADC_ENC)
 begin
-    CCPD_SPI_FF <= {CCPD_SPI_FF[7:0],CCPD_SPI_CLK};
+    CCPD_SPI_FF <= {CCPD_SPI_FF[7:0],~CCPD_SPI_CLK};
 end
-assign CCPD_CK1=CCPD_SPI_CLK & ~CCPD_SPI_FF[1];
-assign CCPD_CK2=CCPD_SPI_FF[2] & ~CCPD_SPI_FF[3];
+assign CCPD_CK1= CCPD_AEN & (CCPD_SPI_FF[2]& ~CCPD_SPI_FF[3]);
+assign CCPD_CK2= CCPD_AEN & (CCPD_SPI_FF[4] & ~CCPD_SPI_FF[5]);
 assign CCPD_LD = CCPD_ALD; //TODO for 4 matrixes
 
 spi
 #(         
     .BASEADDR(CCPD_SPI_BASEADDR), 
     .HIGHADDR(CCPD_SPI_HIGHADDR),
-    .MEM_BYTES(356) 
+    .MEM_BYTES(187) 
 ) i_ccpd_spi (
          .BUS_CLK(BUS_CLK),
          .BUS_RST(BUS_RST),
@@ -645,14 +646,14 @@ spi
     .SCLK(),
     .SDI(CCPD_SIN),
     .SDO(CCPD_SOUT),
-    .SEN(),
+    .SEN(CCPD_SEN),
     .SLD(CCPD_SLD)
 );
 spi
 #(         
     .BASEADDR(CCPD_SPI_A_BASEADDR), 
     .HIGHADDR(CCPD_SPI_A_HIGHADDR),
-    .MEM_BYTES(356) 
+    .MEM_BYTES(187) 
 ) i_ccpd_spi_a (
          .BUS_CLK(BUS_CLK),
          .BUS_RST(BUS_RST),
@@ -667,14 +668,14 @@ spi
     .SCLK(),
     .SDI(CCPD_ASIN),
     .SDO(CCPD_ASOUT),
-    .SEN(),
+    .SEN(CCPD_AEN),
     .SLD(CCPD_ALD)
 );
 spi
 #(         
     .BASEADDR(CCPD_SPI_B_BASEADDR), 
     .HIGHADDR(CCPD_SPI_B_HIGHADDR),
-    .MEM_BYTES(356) 
+    .MEM_BYTES(187) 
 ) i_ccpd_spi_b (
          .BUS_CLK(BUS_CLK),
          .BUS_RST(BUS_RST),
@@ -689,14 +690,14 @@ spi
     .SCLK(),
     .SDI(CCPD_BSIN),
     .SDO(CCPD_BSOUT),
-    .SEN(),
+    .SEN(CCPD_BEN),
     .SLD(CCPD_BLD)
 );
 spi 
 #(         
     .BASEADDR(CCPD_SPI_N_BASEADDR), 
     .HIGHADDR(CCPD_SPI_N_HIGHADDR),
-    .MEM_BYTES(356) 
+    .MEM_BYTES(187) 
 ) i_ccpd_spi_n (
     .BUS_CLK(BUS_CLK),
     .BUS_RST(BUS_RST),
@@ -711,7 +712,7 @@ spi
     .SCLK(),
     .SDI(CCPD_NSIN),
     .SDO(CCPD_NSOUT),
-    .SEN(),
+    .SEN(CCPD_NEN),
     .SLD(CCPD_NLD)
 );
 

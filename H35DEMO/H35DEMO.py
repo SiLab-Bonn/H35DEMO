@@ -24,30 +24,20 @@ class H35DEMO():
         self.dut=Dut(conf)
 
     def init(self):
-        
         self.dut.init()
         self.dut['CCPD_CONF_A'].reset()
         self.dut['CCPD_CONF_A'].set_en(False)
+        self.dut["CCPD_CONF_A"].set_size(1491)
+
         self.configure(BLR=15,VNBias=1,VNFB=5,VNLogic=10,VPLoad=10,VNSF=30,VP=30,VPAB=20)
+        print self.dut["CCPD_CONF_A"][:]
 
     def _preprocess_conf(self, conf):
         return conf
     def power_fei4(self):
         pass
     def configure(self,**karg):
-        self.dut["CCPD_CONF_A"]["SPARE0"]=1
-        self.dut["CCPD_CONF_A"]["DACOut0"]=0x3F
-        self.dut["CCPD_CONF_A"]["SPARE0"]=0
-        self.dut["CCPD_CONF_A"]["DACOut1"]=0x3F
-        self.dut["CCPD_CONF_A"]["SPARE1"]=0
-        self.dut["CCPD_CONF_A"]["DACOut2"]=0x3F
-        self.dut["CCPD_CONF_A"]["SPARE2"]=0
-        self.dut["CCPD_CONF_A"]["DACOut3"]=0x3F
-        self.dut["CCPD_CONF_A"]["SPARE3"]=0
-        self.dut["CCPD_CONF_A"]["DACOut4"]=0x3F
-        self.dut["CCPD_CONF_A"]["SPARE4"]=0
-        self.dut["CCPD_CONF_A"]["DACOut5"]=0x3F
-        self.dut["CCPD_CONF_A"]["SPARE5"]=0
+
         if "BLR" in karg.keys():
             self.dut["CCPD_CONF_A"]["BLR"]=karg["BLR"]
         self.dut["CCPD_CONF_A"]["SPARE6"]=0
@@ -79,6 +69,10 @@ class H35DEMO():
             self.dut["CCPD_CONF_A"]["VPAB"]=karg["VPAB"]
         self.dut["CCPD_CONF_A"]["EnCCPD"]=0
         self.dut["CCPD_CONF_A"].write()
+        self.dut["CCPD_CONF_A"].start()
+        while not self.dut['CCPD_CONF_A'].is_ready:
+            pass 
+
     def show(self):
         pass
 

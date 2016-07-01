@@ -329,7 +329,6 @@
     <!-- project is analyzed based on files automatically identified as       -->
     <!-- include files.                                                       -->
     <file xil_pn:name="../src/clk_gen.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/bus_to_ip.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/gpio/gpio.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/spi/spi.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/spi/spi_core.v" xil_pn:type="FILE_VERILOG"/>
@@ -351,6 +350,10 @@
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/clock_divider.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/fx2_to_bus.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/reset_gen.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/bus_to_ip.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/cdc_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/pulse_gen_rising.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/3_stage_synchronizer.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/pulse_gen/pulse_gen.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/pulse_gen/pulse_gen_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/tlu/tlu_controller.v" xil_pn:type="FILE_VERILOG"/>
@@ -361,10 +364,7 @@
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/gpac_adc_rx/gpac_adc_iobuf.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/cmd_seq/cmd_seq.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/cmd_seq/cmd_seq_core.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/3_stage_synchronizer.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/rrp_arbiter/rrp_arbiter.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/cdc_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
-    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/pulse_gen_rising.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/IDDR_s3.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/ODDR_s3.v" xil_pn:type="FILE_VERILOG"/>
   </autoManagedFiles>
