@@ -43,56 +43,55 @@ class TestSimSr(unittest.TestCase):
     def test_sr(self, mock_preprocess):
     
         self.chip = H35DEMO()
-        self.chip.init()
-        self.chip.set_inj_all(inj_width=10,inj_n=10)
-        self.chip.inject()
-        self.chip.dut["CCPD_ADC_TH"]["SW"]=1
-        self.chip.dut["CCPD_ADC_TH"]["VALUE"]=0x0001
-        self.chip.dut["CCPD_ADC_TH"].write()
+        #H35DEMO.init()
+        self.chip.dut.init()
+        self.chip.dut['dummy'].set_voltage(2)
+        self.chip.dut['dummy'].set_current_limit(0.1)
+        self.chip.dut['dummy'].set_enable(1)
+        self.chip.dut['CCPD_CONF_A'].reset()
+        self.chip.dut['CCPD_CONF_A'].set_en(False)
+        self.chip.dut['CCPD_CONF_A'].set_size(1491)
+        
+        #self.chip.configure(BLR=15,VNBias=1,VNFB=5,VNLogic=10,VPLoad=10,VNSF=30,VP=30,VPAB=20)
+        
+        #### test injection
+        #self.chip.set_inj_all(inj_width=10,inj_n=10)
+        #self.chip.inject()
+        #while not self.chip.dut['CCPD_INJ']['READY']:
+        #    pass
+
+        #### test gpio
+        #self.chip.dut["CCPD_ADC_TH"]["SW"]=1
+        #self.chip.dut["CCPD_ADC_TH"]["VALUE"]=0x0001
+        #self.chip.dut["CCPD_ADC_TH"].write()
+
+        #### test adc 
+        self.chip.set_adc_th()
+        self.chip.set_adc()
+        #self.chip.get_adc_data() ## fail at dut['sram'].get_data()
+        if self.chip.dut["fadc0_rx"].get_en_trigger()==0:
+                self.chip.dut['sram'].reset()
+                for i in range(4):
+                    self.chip.dut['fadc%d_rx'%i].start()
+                flg=0
+        elif self.chip.dut["CCPD_SW"]["ADC_TRIG_GATE"]==1: ## inj TODO exclude extrig of gate==0 (tlu)
+                self.chip.dut['sram'].reset()
+                self.chip.dut['CCPD_GATE'].start()
+                flg=1
+        else:
+                flg=2  ## th TODO tlu
+        while (flg==0 and self.chip.dut['fadc0_rx'].is_done()==0):
+             pass
+        while (flg==0 and self.chip.dut['fadc1_rx'].is_done()==0):
+             pass
+        while (flg==0 and self.chip.dut['fadc2_rx'].is_done()==0):
+             pass
+        while (flg==0 and self.chip.dut['fadc3_rx'].is_done()==0):
+             pass
+
+        #### test sram.get_data() ## this passes
         #ret = self.chip.dut['sram'].get_data()
-        while not self.chip.dut['CCPD_INJ']['READY']:
-            pass
-        print ret
-
-        '''
-        #reset SPI memory
-        self.dut['global_conf'].set_size(8*19)
-        self.dut['global_conf'].write()
-        while not self.dut['global_conf'].is_ready:
-            pass
-        self.dut['global_conf'].write()
-        while not self.dut['global_conf'].is_ready:
-            pass 
-            
-        self.dut['control']['RESET'] = 1
-        self.dut['control'].write()
-        self.dut['control']['RESET'] = 0
-        self.dut['control'].write()
-        
-        #global reg
-        self.dut['global_conf']['PrmpVbpDac'] = 36
-        self.dut['global_conf']['vthin1Dac'] = 255
-        self.dut['global_conf']['vthin2Dac'] = 0
-        self.dut['global_conf']['PrmpVbnFolDac'] = 0
-        self.dut['global_conf']['vbnLccDac'] = 51
-        self.dut['global_conf']['compVbnDac'] = 25
-        self.dut['global_conf']['preCompVbnDac'] = 50
-        self.dut['global_conf']['ColSrEn'].setall(True) #enable programming of all columns
-        
-        self.dut.write_global()
-        self.dut.write_global()
-        
-        send = self.dut['global_conf'].tobytes()
-        rec =  self.dut['global_conf'].get_data(size=19)
-        
-        self.assertEqual(send,rec)
-
-        self.dut['control']['RESET'] = 0b11
-        self.dut['control'].write()
-        
-        #TODO: check for pixels
-        ''' 
-
+        #print ret
         
     def tearDown(self):
         self.chip.dut.close()

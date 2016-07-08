@@ -63,8 +63,8 @@ class H35DEMO():
         self.dut['CCPD_CONF_A'].set_en(False)
         self.dut['CCPD_CONF_A'].set_size(1491)
 
-        #self.configure(BLR=15,VNBias=1,VNFB=5,VNLogic=10,VPLoad=10,VNSF=30,VP=30,VPAB=20)
-        #self.set_inj_all(inj_high=1,inj_low=0,inj_n=1,inj_width=500)
+        self.configure(BLR=15,VNBias=1,VNFB=5,VNLogic=10,VPLoad=10,VNSF=30,VP=30,VPAB=20)
+        self.set_inj_all(inj_high=1,inj_low=0,inj_n=1,inj_width=500)
 
     def _preprocess_conf(self, conf):
         return conf
