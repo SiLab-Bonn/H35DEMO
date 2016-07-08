@@ -44,8 +44,14 @@ class TestSimSr(unittest.TestCase):
     
         self.chip = H35DEMO()
         self.chip.init()
-
-        ret = self.chip.dut['SRAM'].get_data()
+        self.chip.set_inj_all(inj_width=10,inj_n=10)
+        self.chip.inject()
+        self.chip.dut["CCPD_ADC_TH"]["SW"]=1
+        self.chip.dut["CCPD_ADC_TH"]["VALUE"]=0x0001
+        self.chip.dut["CCPD_ADC_TH"].write()
+        #ret = self.chip.dut['sram'].get_data()
+        while not self.chip.dut['CCPD_INJ']['READY']:
+            pass
         print ret
 
         '''

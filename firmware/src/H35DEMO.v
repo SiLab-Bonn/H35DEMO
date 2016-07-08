@@ -225,29 +225,26 @@ localparam FIFO_BASEADDR = 16'h8100;
 localparam FIFO_HIGHADDR = 16'h8200-1;
 
 localparam TLU_BASEADDR = 16'h8200;
-localparam TLU_HIGHADDR = 16'h8300-1;
+localparam TLU_HIGHADDR = 16'h827F;
 
 localparam RX4_BASEADDR = 16'h8300;
 localparam RX4_HIGHADDR = 16'h8400-1;
 
 localparam GPIO_RX_BASEADDR = 16'h8800;
-localparam GPIO_RX_HIGHADDR = 16'h8840-1;
+localparam GPIO_RX_HIGHADDR = 16'h883F;
 
 //ADC
 localparam ADC_SPI_BASEADDR = 16'h8840;                 // 0x8840
 localparam ADC_SPI_HIGHADDR = ADC_SPI_BASEADDR + 47;    // 0x886f
 
-localparam ADC_RX_CH0_BASEADDR = 16'h8870;   
-localparam ADC_RX_CH0_HIGHADDR = ADC_RX_CH0_BASEADDR + 15; // 0x889f
-
-localparam ADC_RX_CH1_BASEADDR = 16'h8880; 
-localparam ADC_RX_CH1_HIGHADDR = ADC_RX_CH1_BASEADDR + 15; // 0x004f
-    
-localparam ADC_RX_CH2_BASEADDR = 16'h8890;
-localparam ADC_RX_CH2_HIGHADDR = ADC_RX_CH2_BASEADDR + 15; // 0x005f
-    
-localparam ADC_RX_CH3_BASEADDR = 16'h88A0;  // 0x0060
-localparam ADC_RX_CH3_HIGHADDR = ADC_RX_CH3_BASEADDR + 15; // 0x006f
+localparam ADC_RX_CH0_BASEADDR = 16'h8280;   
+localparam ADC_RX_CH0_HIGHADDR = ADC_RX_CH0_BASEADDR + 31; // 
+localparam ADC_RX_CH1_BASEADDR = 16'h82A0; 
+localparam ADC_RX_CH1_HIGHADDR = ADC_RX_CH1_BASEADDR + 31; // 
+localparam ADC_RX_CH2_BASEADDR = 16'h82C0;
+localparam ADC_RX_CH2_HIGHADDR = ADC_RX_CH2_BASEADDR + 31; //
+localparam ADC_RX_CH3_BASEADDR = 16'h82E0; 
+localparam ADC_RX_CH3_HIGHADDR = ADC_RX_CH3_BASEADDR + 31; //
 
 // CCPD
 localparam CCPD_PULSE_INJ_BASEADDR= 16'h88B0;
@@ -271,14 +268,11 @@ localparam CCPD_SPI_N_HIGHADDR = 16'h90ff;
 localparam CCPD_GPIO_SW_BASEADDR = 16'h9100;
 localparam CCPD_GPIO_SW_HIGHADDR = 16'h911f;
 
-localparam CCPD_GPIO_TH_BASEADDR = 16'h9120;
-localparam CCPD_GPIO_TH_HIGHADDR = 16'h915f;
+localparam CCPD_TDC_BASEADDR = 16'h8870;
+localparam CCPD_TDC_HIGHADDR = 16'h888f;
 
-//localparam CCPD_GPIO_TH2_BASEADDR = 16'h9140;
-//localparam CCPD_GPIO_TH2_HIGHADDR = 16'h915f;
-
-localparam CCPD_TDC_BASEADDR = 16'h9160;
-localparam CCPD_TDC_HIGHADDR = 16'h917f;
+localparam GPIO_TH_BASEADDR = 16'h8890;
+localparam GPIO_TH_HIGHADDR = 16'h88af;
 
 // -------  BUS SYGNALING  ------- //
 wire [15:0] BUS_ADD;
@@ -293,7 +287,6 @@ fx2_to_bus i_fx2_to_bus (
     .BUS_RD(BUS_RD),
     .BUS_WR(BUS_WR)
 );
-
 
 // -------  USER MODULES  ------- //
 wire FIFO_NOT_EMPTY; // raised, when SRAM FIFO is not empty
@@ -482,13 +475,30 @@ wire ADC_EN;
         .ADC_IN3(ADC_IN[3])
     );
 
+    // GATE
+    wire CCPD_ADC_TRIG_GATE,CCPD_ADC_TRIG_GATE_SW;
+    reg ccpd_adc_trig_gate_ff;
+    always @ (posedge ADC_ENC)
+    begin
+         ccpd_adc_trig_gate_ff <= CCPD_PULSE_GATE;
+    end
+    assign CCPD_ADC_TRIG_GATE = CCPD_PULSE_GATE & ~ccpd_adc_trig_gate_ff; //rising edge 
+
+    wire [31:0] FIFO_DATA_ADC [3:0];
+    wire [3:0] FIFO_EMPTY_ADC;
+    wire [3:0] FIFO_READ_ADC;
+    wire [3:0] ADC_ERROR;
+    wire ADC_TRIGGER;
+	 
     wire [13:0] ADC_TH;
-     wire NC,ADC_TRIG_SW;
+    wire [1:0] ADC_TRIG_TH_SW;
+    wire ADC_TRIG_TH;
+    reg adc_trig_th_ff;
     gpio #(
-         .BASEADDR(CCPD_GPIO_TH_BASEADDR),
-         .HIGHADDR(CCPD_GPIO_TH_HIGHADDR),
-         .IO_WIDTH(16),
-         .IO_DIRECTION(16'hffff)
+        .BASEADDR(GPIO_TH_BASEADDR),
+        .HIGHADDR(GPIO_TH_HIGHADDR),
+        .IO_WIDTH(16),
+        .IO_DIRECTION(16'hffff)
     ) i_gpio_th (
         .BUS_CLK(BUS_CLK), 
         .BUS_RST(BUS_RST), 
@@ -496,35 +506,21 @@ wire ADC_EN;
         .BUS_DATA(BUS_DATA),
         .BUS_RD(BUS_RD),
         .BUS_WR(BUS_WR),
-        .IO({NC,ADC_TRIG_SW, ADC_TH})
-     );
-      
-    wire [31:0] FIFO_DATA_ADC [3:0];
-    wire [3:0] ADC_SYNC;
-     wire [3:0] FIFO_EMPTY_ADC;
-     wire [3:0] FIFO_READ_ADC;
-     wire [3:0] ADC_ERROR;     
-     wire ADC_TRIG_GATE,ADC_TRIG_TH,ADC_TRIGGER;
-     reg CCPD_PULSE_GATE_RISING_FF,adc_trig_ff;
-     always @ (posedge ADC_ENC)
-     begin
-         CCPD_PULSE_GATE_RISING_FF <= CCPD_PULSE_GATE;
-     end
-     assign ADC_TRIG_GATE = CCPD_PULSE_GATE & ~CCPD_PULSE_GATE_RISING_FF; //rising edge
-
+        .IO({ADC_TRIG_TH_SW, ADC_TH})
+    );
     always@(posedge ADC_ENC)
-        adc_trig_ff <= ADC_IN[0] > ADC_TH;
-    assign ADC_TRIG_TH = ADC_IN[0] > ADC_TH && adc_trig_ff == 0;
-     assign ADC_TRIGGER=ADC_TRIG_SW ? ADC_TRIG_GATE : ADC_TRIG_GATE;
-     assign ADC_SYNC = 4'b0000;
-     
+         adc_trig_th_ff <= ADC_IN[ADC_TRIG_TH_SW] > ADC_TH;
+    assign ADC_TRIG_TH = ADC_IN[ADC_TRIG_TH_SW] > ADC_TH && adc_trig_th_ff == 0;
+
+    assign ADC_TRIGGER = (CCPD_ADC_TRIG_GATE_SW) ? CCPD_ADC_TRIG_GATE : ADC_TRIG_TH;
+
     genvar i;
     generate
     for (i = 0; i < 4; i = i + 1) begin: adc_gen
         gpac_adc_rx 
         #(
-            .BASEADDR(ADC_RX_CH0_BASEADDR), 
-            .HIGHADDR(ADC_RX_CH0_HIGHADDR),
+            .BASEADDR(ADC_RX_CH0_BASEADDR+32*i), 
+            .HIGHADDR(ADC_RX_CH0_HIGHADDR+32*i),
             .ADC_ID(i), 
             .HEADER_ID(1'b1) 
         ) i_gpac_adc_rx
@@ -532,8 +528,8 @@ wire ADC_EN;
             .ADC_ENC(ADC_ENC),
             .ADC_IN(ADC_IN[i]),
 
-            .ADC_SYNC(ADC_SYNC[i]),
-                .ADC_TRIGGER(ADC_TRIGGER),
+            .ADC_SYNC(ADC_TRIGGER),
+            .ADC_TRIGGER(ADC_TRIGGER),
 
             .BUS_CLK(BUS_CLK),
             .BUS_RST(BUS_RST),
@@ -553,8 +549,8 @@ wire ADC_EN;
         
 //////////////////////
 // CCPD
-assign CCPD_RB=1'b1;
-wire [7:0] NC_CCPD_GPIO;
+assign CCPD_RB=1'b0;
+wire [6:0] NC_CCPD_GPIO;
 gpio 
 #( 
     .BASEADDR(CCPD_GPIO_SW_BASEADDR),
@@ -568,7 +564,7 @@ gpio
     .BUS_DATA(BUS_DATA),
     .BUS_RD(BUS_RD),
     .BUS_WR(BUS_WR),
-    .IO(NC_CCPD_GPIO)
+    .IO({NC_CCPD_GPIO,CCPD_ADC_TRIG_GATE_SW})
 );
 
 wire CCPD_GATE_EXT_START;
@@ -610,7 +606,7 @@ pulse_gen
 wire CCPD_SLD,CCPD_ALD,CCPD_BLD,CCPD_NLD;
 wire CCPD_SEN,CCPD_AEN,CCPD_BEN,CCPD_NEN;
 wire CCPD_SPI_CLK_CE;
-reg [7:0] CCPD_SPI_FF;
+reg [7:0] ccpd_spi_ff;
 clock_divider #(   
     .DIVISOR(8) //
 ) i_clock_divisor_spi (
@@ -621,10 +617,10 @@ clock_divider #(
 );
 always@(posedge ADC_ENC)
 begin
-    CCPD_SPI_FF <= {CCPD_SPI_FF[7:0],~CCPD_SPI_CLK};
+    ccpd_spi_ff <= {ccpd_spi_ff[7:0],~CCPD_SPI_CLK};
 end
-assign CCPD_CK1= CCPD_AEN & (CCPD_SPI_FF[2]& ~CCPD_SPI_FF[3]);
-assign CCPD_CK2= CCPD_AEN & (CCPD_SPI_FF[4] & ~CCPD_SPI_FF[5]);
+assign CCPD_CK1= CCPD_AEN & (ccpd_spi_ff[2]& ~ccpd_spi_ff[3]);
+assign CCPD_CK2= CCPD_AEN & (ccpd_spi_ff[4] & ~ccpd_spi_ff[5]);
 assign CCPD_LD = CCPD_ALD; //TODO for 4 matrixes
 
 spi
@@ -764,7 +760,8 @@ rrp_arbiter
     .RST(BUS_RST),
     .CLK(BUS_CLK),
 
-    .WRITE_REQ({~FIFO_EMPTY_ADC & ADC_SEL,~TLU_FIFO_EMPTY & TLU_SEL}),
+    .WRITE_REQ({~FIFO_EMPTY_ADC[3] & ADC_SEL,~FIFO_EMPTY_ADC[2] & ADC_SEL,~FIFO_EMPTY_ADC[1] & ADC_SEL,
+                ~FIFO_EMPTY_ADC[0] & ADC_SEL,~TLU_FIFO_EMPTY & TLU_SEL}),
     .HOLD_REQ({4'b0, TLU_FIFO_PEEMPT_REQ}),
     .DATA_IN({FIFO_DATA_ADC[3],FIFO_DATA_ADC[2],FIFO_DATA_ADC[1],FIFO_DATA_ADC[0],TLU_FIFO_DATA}),
     .READ_GRANT(READ_GRANT),
@@ -839,7 +836,7 @@ assign LED[3] = 0;
 assign LED[4] = 0;
 
 assign CCPD_DEBUG[0] = CCPD_GATE; //DOUT 9
-assign CCPD_DEBUG[1] = adc_trig_ff; //TRIGGER_ACKNOWLEDGE_FLAG; //DOUT10
+assign CCPD_DEBUG[1] = 1'b0; //TRIGGER_ACKNOWLEDGE_FLAG; //DOUT10
 assign CCPD_DEBUG[2] = ADC_TRIGGER; //DOUT11
 assign CCPD_DEBUG[3] = CCPD_GATE_EXT_START; //DOUT12
 

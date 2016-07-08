@@ -6,7 +6,7 @@ transfer_layer:
   - name     : USB
     type     : SiUsb
     init     :
-        bit_file : ../firmware/bit/H35DEMO.bit
+        bit_file : ../firmware/ise/H35DEMO.bit
 
 
 hw_drivers:
@@ -22,7 +22,7 @@ hw_drivers:
 #    interface : USB
 #    base_addr : 0x10000
 
-  - name      : SRAM
+  - name      : sram
     type      : sram_fifo
     interface : USB
     base_addr : 0x18100
@@ -37,6 +37,34 @@ hw_drivers:
     type      : fei4_rx
     interface : USB
     base_addr : 0x18300
+
+  - name      : gpio_rx
+    type      : gpio
+    interface : USB
+    base_addr : 0x18800
+
+#### adc
+  - name      : SPI_FADC
+    type      : spi
+    interface : USB
+    base_addr : 0x18840
+    mem_bytes : 2
+  - name      : fadc0_rx
+    type      : fadc_rx
+    interface : USB
+    base_addr : 0x18280
+  - name      : fadc1_rx
+    type      : fadc_rx
+    interface : USB
+    base_addr : 0x182A0
+  - name      : fadc2_rx
+    type      : fadc_rx
+    interface : USB
+    base_addr : 0x182C0
+  - name      : fadc3_rx
+    type      : fadc_rx
+    interface : USB
+    base_addr : 0x182E0
 
 #### ccpd
   - name      : ccpd_spi
@@ -66,8 +94,23 @@ hw_drivers:
   - name      : ccpd_gpio_adc_th
     type      : gpio
     interface : USB
-    base_addr : 0x19120
+    base_addr : 0x18890
     size : 16
+
+  - name      : ccpd_gpio_sw
+    type      : gpio
+    interface : USB
+    base_addr : 0x19100
+    size : 8
+
+  - name      : CCPD_GATE
+    type      : pulse_gen
+    interface : USB
+    base_addr : 0x188C0
+  - name      : CCPD_INJ
+    type      : pulse_gen
+    interface : USB
+    base_addr : 0x188B0
 
 registers:
   - name        : Vin
@@ -75,6 +118,78 @@ registers:
     hw_driver   : GPAC
     arg_names   : [value]
     arg_add     : {'channel': 'PWR1'}
+  - name        : dummy
+    type        : FunctionalRegister
+    hw_driver   : GPAC
+    arg_names   : [value]
+    arg_add     : {'channel': 'PWR0'}
+  - name        : CCPD_INJ_LOW
+    type        : FunctionalRegister
+    hw_driver   : GPAC
+    arg_names   : [ value ]
+    arg_add     : { 'channel': 'INJ1'}
+  - name        : CCPD_INJ_HIGH
+    type        : FunctionalRegister
+    hw_driver   : GPAC
+    arg_names   : [ value ]
+    arg_add     : { 'channel': 'INJ0'}
+
+  - name        : ADCref0
+    type        : FunctionalRegister
+    hw_driver   : GPAC
+    arg_names   : [value]
+    arg_add     : {'channel': 'VSRC0'}
+  - name        : ADCref1
+    type        : FunctionalRegister
+    hw_driver   : GPAC
+    arg_names   : [value]
+    arg_add     : {'channel': 'VSRC1'}
+  - name        : ADCref2
+    type        : FunctionalRegister
+    hw_driver   : GPAC
+    arg_names   : [value]
+    arg_add     : {'channel': 'VSRC2'}
+  - name        : ADCref3
+    type        : FunctionalRegister
+    hw_driver   : GPAC
+    arg_names   : [value]
+    arg_add     : {'channel': 'VSRC3'}
+
+  - name        : rx
+    type        : StdRegister
+    hw_driver   : gpio_rx
+    size        : 8
+    fields :
+      - name    : NC1
+        size    : 1
+        offset  : 5
+      - name    : NC
+        size    : 1
+        offset  : 4
+      - name    : ADC
+        size    : 1
+        offset  : 3
+      - name    : CCPD_TDC
+        size    : 1
+        offset  : 2
+      - name    : FE
+        size    : 1
+        offset  : 1
+      - name    : TLU
+        size    : 1
+        offset  : 0
+
+  - name        : CCPD_SW
+    type        : StdRegister
+    hw_driver   : ccpd_gpio_sw
+    size        : 8
+    fields :
+      - name    : NC1
+        size    : 7
+        offset  : 7
+      - name    : ADC_TRIG_GATE
+        size    : 1
+        offset  : 0
 
   - name        : CCPD_ADC_TH
     type        : StdRegister
@@ -99,6 +214,7 @@ registers:
       - name    : DACOut0
         size    : 6
         offset  : 5
+        #bit_order: [5,4,3,2,1,0] default
         bit_order: [0,1,2,3,4,5]
       - name    : SPARE0
         size    : 1
@@ -107,7 +223,6 @@ registers:
       - name    : DACOut1
         size    : 6
         offset  : 12
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE1
         size    : 1
         offset  : 13
@@ -115,7 +230,6 @@ registers:
       - name    : DACOut2
         size    : 6
         offset  : 19
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE2
         size    : 1
         offset  : 20
@@ -123,7 +237,6 @@ registers:
       - name    : DACOut3
         size    : 6
         offset  : 26
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE3
         size    : 1
         offset  : 27
@@ -131,7 +244,6 @@ registers:
       - name    : DACOut4
         size    : 6
         offset  : 33
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE4
         size    : 1
         offset  : 34
@@ -139,7 +251,6 @@ registers:
       - name    : DACOut5
         size    : 6
         offset  : 40
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE5
         size    : 1
         offset  : 41
@@ -171,7 +282,6 @@ registers:
       - name    : DACOut9
         size    : 6
         offset  : 68
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE9
         size    : 1
         offset  : 69
@@ -179,7 +289,6 @@ registers:
       - name    : DACOut10
         size    : 6
         offset  : 75
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE10
         size    : 1
         offset  : 76
@@ -187,7 +296,6 @@ registers:
       - name    : DACOut11
         size    : 6
         offset  : 82
-        bit_order: [0,1,2,3,4,5]
       - name    : SPARE11
         size    : 1
         offset  : 83
@@ -234,10 +342,10 @@ registers:
 
       - name    : ROW
         size    : 4
-        repeat  : 8
+        repeat  : 23
         offset  : 210
         fields  :
-            - name    : RamId
+            - name    : RamLd
               size    : 1
               offset  : 3
             - name    : Ampout
@@ -269,16 +377,9 @@ registers:
       - name    : DIGI
         size    : 80
         offset  : 1490
-      - name    : DACOut0
-        size    : 6
-        offset  : 5
-        bit_order: [0,1,2,3,4,5]
-      - name    : SPARE0
-        size    : 1
-        offset  : 6
 
     init    :
-        DACOut0 : 0x20
+        DACOut0 : 0x3F
         SPARE0  : 1
         DACOut1 : 0x3F
         SPARE1  : 0
