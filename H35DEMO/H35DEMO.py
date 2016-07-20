@@ -41,13 +41,13 @@ class Log():
                     ,dat['CCPD_INJ']["REPEAT"],dat['CCPD_INJ']["EN"],dat['CCPD_INJ_VOLTAGE'])
         with open(self.logfile,"a") as f:
             f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_CONF_A',dat['CCPD_CONF_A']))
-            f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_INJ',dat['CCPD_INJ']))    
+            f.write("%s %s: %s\n"%H35DEMO_with_fei4(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_INJ',dat['CCPD_INJ']))    
             f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_INJ_VOLTAGE',dat['CCPD_INJ_VOLTAGE'])) 
 
 class H35DEMO():
-    def __init__(self,conf=None):
-        if conf==None:
-            conf = os.path.dirname(os.path.abspath(__file__)) + os.sep + "H35DEMO.yaml"
+    def __init__(self,conf='H35DEMO.yaml'):
+        #if conf==None:
+        #    conf = os.path.dirname(os.path.abspath(__file__)) + os.sep + "H35DEMO.yaml"
         
         logging.info("Loading configuration file from %s" % conf)
         conf = self._preprocess_conf(conf)
@@ -157,8 +157,6 @@ class H35DEMO():
             ret[i]=ret[i] & 0x00003FFF
         return ret
 
-    def power_fei4(self):
-            pass
     def configure(self,**karg):
         """ anabuf=col,inj=[pix],ampout=row,BLR=15,VNBias=1,VNFB=5,VNLogic=10,VPLoad=10,VNSF=30,VP=30,VPAB=20
         """

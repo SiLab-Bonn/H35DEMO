@@ -206,10 +206,10 @@ clk_gen iclkgen(
     .U1_RST_IN(1'b0),
     .U1_CLKIN_IBUFG_OUT(),
     .U1_CLK0_OUT(BUS_CLK),    // DCM1: 48MHz USB/SRAM clock
-     .U1_CLKDV_OUT(DATA_CLK), //DCM1: 16MHz FEI4 data clock
+    .U1_CLKDV_OUT(ADC_ENC),   // DCM1: 9.6MHz adc
     .U1_STATUS_OUT(),
     .U2_CLKFX_OUT(CLK_40),    // DCM2: 40MHz FEI4 command clock
-    .U2_CLKDV_OUT(ADC_ENC),   // DCM2: 10MH adc
+    .U2_CLKDV_OUT(DATA_CLK),  // DCM2: 16MH FEI4 data clock
     .U2_CLK0_OUT(RX_CLK),     // DCM2: 160MHz data clock ADC clock
     .U2_CLK90_OUT(),
     .U2_CLK2X_OUT(RX_CLK2X),  // DCM2: 320MHz data recovery clock
@@ -751,19 +751,19 @@ tdc_s3
 // Arbiter
 wire ARB_READY_OUT, ARB_WRITE_OUT;
 wire [31:0] ARB_DATA_OUT;
-wire [4:0] READ_GRANT;
+wire [5:0] READ_GRANT;
 rrp_arbiter 
 #( 
-    .WIDTH(5)
+    .WIDTH(6)
 ) i_rrp_arbiter
 (
     .RST(BUS_RST),
     .CLK(BUS_CLK),
 
     .WRITE_REQ({~FIFO_EMPTY_ADC[3] & ADC_SEL,~FIFO_EMPTY_ADC[2] & ADC_SEL,~FIFO_EMPTY_ADC[1] & ADC_SEL,
-                ~FIFO_EMPTY_ADC[0] & ADC_SEL,~TLU_FIFO_EMPTY & TLU_SEL}),
+                ~FIFO_EMPTY_ADC[0] & ADC_SEL,~FE_FIFO_EMPTY & FE_SEL,~TLU_FIFO_EMPTY & TLU_SEL}),
     .HOLD_REQ({4'b0, TLU_FIFO_PEEMPT_REQ}),
-    .DATA_IN({FIFO_DATA_ADC[3],FIFO_DATA_ADC[2],FIFO_DATA_ADC[1],FIFO_DATA_ADC[0],TLU_FIFO_DATA}),
+    .DATA_IN({FIFO_DATA_ADC[3],FIFO_DATA_ADC[2],FIFO_DATA_ADC[1],FIFO_DATA_ADC[0],FE_FIFO_DATA,TLU_FIFO_DATA}),
     .READ_GRANT(READ_GRANT),
 
     .READY_OUT(ARB_READY_OUT),
@@ -771,7 +771,8 @@ rrp_arbiter
     .DATA_OUT(ARB_DATA_OUT)
 );
 assign TLU_FIFO_READ = READ_GRANT[0];
-assign FIFO_READ_ADC= READ_GRANT[4:1];
+assign FE_FIFO_READ = READ_GRANT[1];
+assign FIFO_READ_ADC= READ_GRANT[5:2];
 
 // SRAM
 wire USB_READ;

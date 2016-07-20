@@ -7,10 +7,10 @@ module clk_gen    (U1_CLKIN_IN,
                    U1_RST_IN,  
                    U1_CLKIN_IBUFG_OUT, 
                    U1_CLK0_OUT,
-                   U1_CLKDV_OUT, //16MHz				 
+                   U1_CLKDV_OUT, //9.6MHz				 
                    U1_STATUS_OUT, 
                    U2_CLKFX_OUT, 
-                   U2_CLKDV_OUT, //10MHz
+                   U2_CLKDV_OUT, //16MHz
                    U2_CLK0_OUT,  //160MHz
                    U2_CLK90_OUT, 
                    U2_CLK2X_OUT, 
@@ -52,7 +52,7 @@ module clk_gen    (U1_CLKIN_IN,
    assign GND_BIT = 0;
    assign U1_CLKIN_IBUFG_OUT = U1_CLKIN_IBUFG;
    assign U2_CLK0_OUT = U2_CLKFB_IN;
-   DCM #( .CLK_FEEDBACK("1X"), .CLKDV_DIVIDE(3.0), .CLKFX_DIVIDE(3),  //DV_DIVIDE4->3
+   DCM #(.CLK_FEEDBACK("1X"), .CLKDV_DIVIDE(5.0), .CLKFX_DIVIDE(3),  //DV_DIVIDE4->3
          .CLKFX_MULTIPLY(10), .CLKIN_DIVIDE_BY_2("FALSE"), 
          .CLKIN_PERIOD(20.833), .CLKOUT_PHASE_SHIFT("NONE"), 
          .DESKEW_ADJUST("SYSTEM_SYNCHRONOUS"), .DFS_FREQUENCY_MODE("LOW"), 
@@ -77,7 +77,7 @@ module clk_gen    (U1_CLKIN_IN,
                   .LOCKED(U1_LOCKED_INV_IN), 
                   .PSDONE(), 
                   .STATUS(U1_STATUS_OUT[7:0]));
-   DCM #( .CLK_FEEDBACK("1X"), .CLKDV_DIVIDE(16.0), .CLKFX_DIVIDE(8), //DV_DIVIDE=10->16
+   DCM #( .CLK_FEEDBACK("1X"), .CLKDV_DIVIDE(10.0), .CLKFX_DIVIDE(8), //DV_DIVIDE=10
          .CLKFX_MULTIPLY(2), .CLKIN_DIVIDE_BY_2("FALSE"), 
          .CLKIN_PERIOD(6.250), .CLKOUT_PHASE_SHIFT("NONE"), 
          .DESKEW_ADJUST("SYSTEM_SYNCHRONOUS"), .DFS_FREQUENCY_MODE("LOW"), 

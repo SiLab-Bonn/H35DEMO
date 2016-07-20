@@ -17,12 +17,12 @@ hw_drivers:
     init      :
         no_calibration : True
 
-#  - name      : CMD
-#    type      : cmd_seq
-#    interface : USB
-#    base_addr : 0x10000
+  - name      : CMD
+    type      : cmd_seq
+    interface : USB
+    base_addr : 0x10000
 
-  - name      : sram
+  - name      : SRAM
     type      : sram_fifo
     interface : USB
     base_addr : 0x18100
