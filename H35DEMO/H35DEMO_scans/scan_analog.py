@@ -16,7 +16,7 @@ class AnalogScan(Fei4RunBase):
         "mask_steps": 3,  # mask steps, be carefull PlsrDAC injects different charge for different mask steps
         "n_injections": 100,  # number of injections
         "scan_parameters": [('PlsrDAC', 280)],  # the PlsrDAC setting
-        "use_enable_mask": False,  # if True, use Enable mask during scan, if False, all pixels will be enabled
+        "use_enable_mask": True,  # if True, use Enable mask during scan, if False, all pixels will be enabled
         "enable_shift_masks": ["Enable", "C_High", "C_Low"],  # enable masks shifted during scan
         "disable_shift_masks": [],  # disable masks shifted during scan
         "pulser_dac_correction": False,  # PlsrDAC correction for each double column
@@ -25,13 +25,6 @@ class AnalogScan(Fei4RunBase):
         "enable_double_columns": None,  # List of double columns which will be enabled during scan. None will select all double columns
         "enable_mask_steps": None,  # List of mask steps which will be applied. None will select all mask steps.
     }
-    def init_dub(self):
-        print "-----------analogscan-----------"
-        self.dut['CCPD_Vdda'].set_voltage(1.8, unit='V')
-        self.dut['CCPD_Vdda'].set_enable(True)
-        self.dut['ENABLE_CHANNEL']['FE'] = 1
-        self.dut['ENABLE_CHANNEL']['TLU'] = 1
-        self.dut['ENABLE_CHANNEL'].write()
 
     def configure(self):
         commands = []

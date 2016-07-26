@@ -24,33 +24,42 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
         self.dut['CCPD_CONF_A'].set_size(1491)
         self.configure(BLR=15,VNBias=1,VNFB=5,VNLogic=10,VPLoad=10,VNSF=30,VP=30,VPAB=20)
         self.set_inj_all(inj_high=1,inj_low=0,inj_n=1,inj_width=500)
-        self.logger.info("power_fei4: %.3fV(%.3fmA)"%(self.dut['Vin'].get_voltage(),self.dut['Vin'].get_current(unit="mA")))
-        
-
+        self.logger.info("power_fei4: %.3fV(%.3fmA)"%(self.dut['V_in'].get_voltage(),self.dut['V_in'].get_current(unit="mA")))
 
     def test_fei4(self):
-        self.dut["rx"]["FE"]=1
-        self.dut["rx"].write()
+        self.dut["ENABLE_CHANNEL"]["FE"]=1
+        self.dut["ENABLE_CHANNEL"].write()
         self.rmg.run_run(H35DEMO_scans.DigitalScan)
         self.rmg.run_run(H35DEMO_scans.AnalogScan)
 
     def tune_fei4(self,run_conf=None,tune="fei4"):
-        self.dut["rx"]["FE"]=1
-        self.dut["rx"].write()
+        self.dut["ENABLE_CHANNEL"]["FE"]=1
+        self.dut["ENABLE_CHANNEL"].write()
         if tune=="fei4":
-            self.rmg.run_run(ccpdlf_scans.Fei4Tuning,run_conf=run_conf)
+            self.rmg.run_run(H35DEMO_scans.Fei4Tuning,run_conf=run_conf)
         else:
-            self.rmg.run_run(ccpdlf_scans.ThresholdBaselineTuning,run_conf=run_conf)
+            self.rmg.run_run(H35DEMO_scans.ThresholdBaselineTuning,run_conf=run_conf)
 
     def run_selftrigger(self,run_conf=None,use_thread=False):
-       self.rmg.run_run(ccpdlf_scans.FEI4SelfTriggerScan,run_conf=run_conf,use_thread=use_thread)
-    def run_exttrigger(self,run_conf=None,use_thread=False):
-       if run_conf==None:
-           run_conf={"row_offset":self.row_offset}
-       else:
-           if not "row_offset" in run_conf.keys():
-               run_conf["row_offset"]=self.row_offset
-       self.rmg.run_run(ccpdlf_scans.ExtTriggerScan,run_conf=run_conf,use_thread=use_thread)
+       self.rmg.run_run(H35DEMO_scans.FEI4SelfTriggerScan,run_conf=run_conf,use_thread=use_thread)
+    def run_exttrigger(self,run_conf=None,use_thread=False,extrig='inj'):
+        self.dut["ENABLE_CHANNEL"].write()
+        if extrig=="tlu":
+            self.dut["ENABLE_CHANNEL"]["TLU"]=1
+            self.dut["CCPD_SW"]["CMD_TRIG"]=2
+        elif extrig=="monhit":
+            self.dut["ENABLE_CHANNEL"]["TLU"]=0
+            self.dut["CCPD_SW"]["CMD_TRIG"]=1
+        else: ##'inj'CMD_TRIG # 0: none, 1: MONHIT, 2: TLU, 3: CCPD_GATE(inj)
+            self.dut["ENABLE_CHANNEL"]["TLU"]=0
+            self.dut["CCPD_SW"]["CMD_TRIG"]=3
+        self.dut["ENABLE_CHANNEL"].write()
+        self.dut["CCPD_SW"].write()
+        if run_conf==None:
+           run_conf={}
+        if extrig=="inj" and self.dut["CCPD_INJ"]["REPEAT"]!=0:
+           run_conf["ccpd_inj"]=True
+        self.rmg.run_run(H35DEMO_scans.ExtTriggerScan,run_conf=run_conf,use_thread=use_thread)
     def set_hitmon_en(self,pix):
         imon_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('Imon')
         if isinstance(pix,str):
@@ -64,13 +73,13 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
             if np.shape(pix)[1]==2:
               imon_pixel_mask[:12,self.row_offset:self.row_offset+76]=1
               for p in pix:
-                fe_p=self.ccpdlf2fei4(p,True)
+                fe_p=self.H35DEMO2fei4(p,True)
                 imon_pixel_mask[fe_p[0],fe_p[1]]=0
                 ###
                 pix3=[]
-                pix3.append(self.fei42ccpdlf(fe_p,0))
-                pix3.append(self.fei42ccpdlf(fe_p,1))
-                pix3.append(self.fei42ccpdlf(fe_p,2))
+                pix3.append(self.fei42H35DEMO(fe_p,0))
+                pix3.append(self.fei42H35DEMO(fe_p,1))
+                pix3.append(self.fei42H35DEMO(fe_p,2))
                 self.logger.info("set_hitmon_en fei4:[%d,%d],pix:%s"%(fe_p[0],fe_p[1],str(pix3)))
             elif np.shape(pix)[1]==76:
                 imon_pixel_mask[:12,self.row_offset:self.row_offset+76]=pix
@@ -89,13 +98,13 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
             if isinstance(pix[0], int):
                 pix=[pix]
             for p in pix:
-                fe_p=self.ccpdlf2fei4(p,True)
+                fe_p=self.H35DEMO2fei4(p,True)
                 fdac_pixel_mask[fe_p[0],fe_p[1]]=fdac
                 ###
                 pix3=[]
-                pix3.append(self.fei42ccpdlf(fe_p,0))
-                pix3.append(self.fei42ccpdlf(fe_p,1))
-                pix3.append(self.fei42ccpdlf(fe_p,2))
+                pix3.append(self.fei42H35DEMO(fe_p,0))
+                pix3.append(self.fei42H35DEMO(fe_p,1))
+                pix3.append(self.fei42H35DEMO(fe_p,2))
                 self.logger.info("set_hitmon_en fdac:%d fei4:[%d,%d],pix:"%(fdac, fe_p[0],fe_p[1]),pix3)
         self.rmg.current_run.register.set_pixel_register_value('FDAC', fdac_pixel_mask)
         commands = []
@@ -103,6 +112,14 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
         commands.extend(self.rmg.current_run.register.get_commands("WrFrontEnd", same_mask_for_all_dc=False, name=["FDAC"]))
         commands.extend(self.rmg.current_run.register.get_commands("RunMode"))
         self.rmg.current_run.register_utils.send_commands(commands)
+    def set_gdac(self,gdac):
+        commands = []
+        self.rmg.current_run.register.set_global_register_value("Vthin_AltFine", gdac)  # set trigger latency
+        commands.extend(self.rmg.current_run.register.get_commands("ConfMode"))
+        commands.extend(self.rmg.current_run.register.get_commands("WrRegister", name=["Vthin_AltFine"]))
+        commands.extend(self.rmg.current_run.register.get_commands("RunMode"))
+        self.rmg.current_run.register_utils.send_commands(commands)
+
     def tune_fdac(self,wgt2=16):
         self.set_preamp_en("all")
         #self.set_inj_all(inj_high=0.3,inj_n=100)
@@ -120,7 +137,7 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
             self.run_exttrigger({"trig_src":"inj",'ccpd_inj':True,'scan_timeout':1})
             with tables.open_file(self.get_fei4file()) as tb:
                  for i,p in enumerate(pix):
-                     fep0,fep1=self.ccpdlf2fei4(p,True)
+                     fep0,fep1=self.H35DEMO2fei4(p,True)
                      d=tb.root.HistTotPixel[fep1,fep0]
                      mean=np.sum(d * x) /float(np.sum(d))
                      dat[i,fdac]=mean
@@ -153,8 +170,8 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
         for g in range(38,110,1):
             self.run_exttrigger(run_conf={"gdac":g})
             try:
-               dat=ccpdlf_util.load_fei4data(ccpdlf_util.get_fei4file(),row_offset=self.row_offset)
-               feix=ccpdlf_util.ccpdlf2fei4(pix,ab="False")
+               dat=H35DEMO_util.load_fei4data(H35DEMO_util.get_fei4file(),row_offset=self.row_offset)
+               feix=H35DEMO_util.H35DEMO2fei4(pix,ab="False")
                s="fepix=[%d,%d] cnt=%d"%(fepix[0],fepix[1],dat[fepix[0],fepix[1]])
                if dat[fepix[0],fepix[1]]==0:
                     break
@@ -199,9 +216,9 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
               c.set_tdac(tdac)
               c.set_mon_en(pix[0])
               c.run_exttrigger({'scan_timeout':1,"trig_src":"inj","ccpd_inj":True})
-              dat=ccpdlf_util.load_fei4data(ccpdlf_util.get_fei4file(),row_offset=self.row_offset)
+              dat=H35DEMO_util.load_fei4data(H35DEMO_util.get_fei4file(),row_offset=self.row_offset)
               for p in pix:
-                  p0,p1=ccpdlf2fei4(p)
+                  p0,p1=H35DEMO2fei4(p)
                   #print tdac[pix[j][0],pix[j][1]],flg[j],"%d-%d"%(p0,p1),dat[p0,p1]
                   if dat[p0,p1]>5:
                       flg[p[1]/3]=1
@@ -228,16 +245,16 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
               for j in range(24):
                 pix=[]
                 for i in range(0,114,3):
-                    fep=c.ccpdlf2fei4([j,i],False)
+                    fep=c.H35DEMO2fei4([j,i],False)
                     for kk in range(3):
                         if kk in k:
-                            pix.append(c.fei42ccpdlf(fep,kk,False))
+                            pix.append(c.fei42H35DEMO(fep,kk,False))
                 c.set_hitmon_en(pix)
                 c.set_inj_en(pix)
                 c.run_exttrigger({"trig_src":"inj",'ccpd_inj':True,'scan_timeout':1})
                 with tables.open_file(get_fei4file()) as tb:
                   for i,p in enumerate(pix):
-                     fep0,fep1=c.ccpdlf2fei4(p,True)
+                     fep0,fep1=c.H35DEMO2fei4(p,True)
                      #print i,p,fep0,fep1,
                      dat[fep0,fep1-self.row_offset,:,k_i]=tb.root.HistTotPixel[fep1,fep0]
             np.save("tot.npy",dat)
@@ -272,12 +289,12 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
             c.set_tdac(tdac)
             while True:
               c.run_exttrigger({'scan_timeout':1,"trig_src":"monhit","ccpd_inj":False})
-              cnt[:,:,t]=ccpdlf_util.load_fei4data(ccpdlf_util.get_fei4file(),row_offset=self.row_offset)
+              cnt[:,:,t]=H35DEMO_util.load_fei4data(H35DEMO_util.get_fei4file(),row_offset=self.row_offset)
               arg=np.argwhere(cnt[:,:,t]>5)
               if len(arg)==0:
                 break
               for a in arg:
-                  p0,p1=fei42ccpdlf(a,k)
+                  p0,p1=fei42H35DEMO(a,k)
                   #if imon_pixel_mask[a[0],a[1]+self.row_offset]==1:
                    #    print "ERROR"
                     #   sys.exit()

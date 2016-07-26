@@ -20,7 +20,7 @@
     </file>
     <file xil_pn:name="../src/H35DEMO.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="44"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="39"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="41"/>
     </file>
   </files>
 
@@ -367,6 +367,8 @@
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/rrp_arbiter/rrp_arbiter.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/IDDR_s3.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/utils/ODDR_s3.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/fast_spi_rx/fast_spi_rx.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil_H35DEMO/firmware/modules/fast_spi_rx/fast_spi_rx_core.v" xil_pn:type="FILE_VERILOG"/>
   </autoManagedFiles>
 
 </project>

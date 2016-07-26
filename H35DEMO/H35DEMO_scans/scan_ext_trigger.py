@@ -23,29 +23,26 @@ class ExtTriggerScan(Fei4RunBase):
     _default_run_conf = {
         "gdac" : None,
         "trig_count": 0,  # FE-I4 trigger count, number of consecutive BCs, 0 means 16, from 0 to 15
-        "trigger_latency": 230,  # FE-I4 trigger latency, in BCs, external scintillator / TLU / HitOR: 232, USBpix self-trigger: 220, injection from ccpdlf 230
+        "trigger_latency": 240,  # FE-I4 trigger latency, in BCs, external scintillator / TLU / HitOR: 232, USBpix self-trigger: 220, injection from ccpdlf 230
         "trigger_delay": 8,  # trigger delay, in BCs
         "trigger_rate_limit": 500,  # artificially limiting the trigger rate, in BCs (25ns)
         "col_span": [1, 80],  # defining active column interval, 2-tuple, from 1 to 80
         "row_span": [1, 336],  # defining active row interval, 2-tuple, from 1 to 336
         "update_c_high_low": False,  # if True, use col_span and row_span to define an active region regardless of the Enable pixel register. If False, use col_span and row_span to define active region by also taking Enable pixel register into account.
         "use_enable_mask_for_imon": False,
-        "no_data_timeout": 3,  # no data timeout after which the scan will be aborted, in seconds
-        "scan_timeout": 2,  # timeout for scan after which the scan will be stopped, in seconds
+        "no_data_timeout": 100,  # no data timeout after which the scan will be aborted, in seconds
+        "scan_timeout": 10,  # timeout for scan after which the scan will be stopped, in seconds
         "max_triggers": 100000,  # maximum triggers after which the scan will be stopped, in seconds
         "enable_tdc": False,  # if True, enables TDC (use RX2)
         "reset_rmake_box_pixel_mask_from_col_rowx_on_error": False,  # long scans have a high propability for ESD related data transmission errors; recover and continue here
-        "trig_src": "inj", # monhit, rj45, inj
-        "tmp_t":0,
-        "ccpd_inj": True,
-        'row_offset':143
+        "ccpd_inj": True
     }
 
     def configure(self):
         self.dut['CMD']['EN_EXT_TRIGGER'] = False
         self.dut["ENABLE_CHANNEL"]["FE"]=0
+        enalble_channel_tlu=self.dut["ENABLE_CHANNEL"]["TLU"]
         self.dut["ENABLE_CHANNEL"]["TLU"]=0
-        self.dut["ENABLE_CHANNEL"].write()
 
         commands = []
         commands.extend(self.register.get_commands("ConfMode"))
@@ -79,35 +76,26 @@ class ExtTriggerScan(Fei4RunBase):
             self.register_utils.set_gdac(self.gdac)
         lvl1_command = self.register.get_commands("zeros", length=self.trigger_delay)[0] + self.register.get_commands("LV1")[0] + self.register.get_commands("zeros", length=self.trigger_rate_limit)[0]
         self.register_utils.set_command(lvl1_command)
-        self.dut['CMD']['EN_EXT_TRIGGER'] = True
-        time.sleep(self.tmp_t)
         self.dut['CMD']['EN_EXT_TRIGGER'] = False
+
         self.dut["ENABLE_CHANNEL"]["FE"]=1
-        
-        if self.trig_src=="rj45":
-            self.dut["ENABLE_CHANNEL"]["MONHIT"]=0
-            self.dut["ENABLE_CHANNEL"]["RJ45"]=1
-            self.dut["ENABLE_CHANNEL"]["TLU"]=1
-        elif self.trig_src=="monhit":
-            self.dut["ENABLE_CHANNEL"]["MONHIT"]=1
-            self.dut["ENABLE_CHANNEL"]["RJ45"]=0
-            self.dut["ENABLE_CHANNEL"]["TLU"]=0
-        else: ##'inj'
-            self.dut["ENABLE_CHANNEL"]["MONHIT"]=0
-            self.dut["ENABLE_CHANNEL"]["RJ45"]=0
-            self.dut["ENABLE_CHANNEL"]["TLU"]=0
-        self.dut["ENABLE_CHANNEL"].write()
+        self.dut["ENABLE_CHANNEL"]["TLU"]=enalble_channel_tlu 
+        self.dut["ENABLE_CHANNEL"].write()  
         
     def scan(self):
         with self.readout(**self.scan_parameters._asdict()):
             if self.ccpd_inj:
                 logging.info("Start injection")
-                self.dut["CCPD_PULSE_INJ"].start()
+                if self.dut["CCPD_INJ"]["REPEAT"]==0:
+                    self.dut["CCPD_GATE"].start()
+                else:
+                    self.dut["CCPD_INJ"].start()
             got_data = False
             while not self.stop_run.wait(0.1):
                 if self.ccpd_inj:
-                     if self.dut["CCPD_PULSE_INJ"]["READY"]==1:
-                         self.stop("Injection done")
+                     if (self.dut["CCPD_INJ"]["REPEAT"]==0 and self.dut["CCPD_GATE"]["READY"]==1) \
+                                                            or self.dut["CCPD_INJ"]["READY"]==1:
+                         self.stop(msg="Injection done")
                 if not got_data:
                     if self.fifo_readout.data_words_per_second() > 0:
                         got_data = True
@@ -120,12 +108,8 @@ class ExtTriggerScan(Fei4RunBase):
                     except ValueError:
                         pass
                     if self.max_triggers and triggers >= self.max_triggers:
-#                         if got_data:
                         self.progressbar.finish()
                         self.stop(msg='Trigger limit was reached: %i' % self.max_triggers)
-#                 print self.fifo_readout.data_words_per_second())
-#                 if (current_trigger_number % show_trigger_message_at < last_trigger_number % show_trigger_message_at):
-#                     logging.info('Collected triggers: %d', current_trigger_number)
 
         logging.info('Total amount of triggers collected: %d', self.dut['TLU']['TRIGGER_COUNTER'])
 
@@ -143,7 +127,7 @@ class ExtTriggerScan(Fei4RunBase):
             analyze_raw_data.interpret_word_table()
             analyze_raw_data.interpreter.print_summary()
             analyze_raw_data.plot_histograms()
-        print np.asarray(ccpdlf_util.load_fei4data("%s_interpreted.h5"%self.output_filename,dataname="HistOcc",row_offset=self.row_offset),int)
+        #print np.asarray(ccpdlf_util.load_fei4data("%s_interpreted.h5"%self.output_filename,dataname="HistOcc",row_offset=self.row_offset),int)
     def start_readout(self, **kwargs):
         if kwargs:
             self.set_scan_parameters(**kwargs)
@@ -166,12 +150,6 @@ class ExtTriggerScan(Fei4RunBase):
         self.scan_timeout_timer = Timer(self.scan_timeout, timeout)
         if self.scan_timeout:
                 self.scan_timeout_timer.start()
-            #if self.dut["CCPD_PULSE_INJ"]["REPEAT"]!=0:
-            #    while not self.dut["CCPD_PULSE_INJ"]["READY"]:
-            #        time.sleep(0.1)
-            #    self.scan_timeout_timer.cancel()
-            #    self.fifo_readout.stop(timeout=timeout)
-            #    logging.info("injection done")
 
 
     def stop_readout(self, timeout=10.0):

@@ -11,16 +11,16 @@ class InitScan(Fei4RunBase):
     
     def init_dut(self):
         # PWR
-        self.dut['Vin'].set_current_limit(4095,unit='raw')
+        self.dut['V_in'].set_current_limit(4095,unit='raw')
         self.dut['dummy'].set_voltage(2)
         self.dut['dummy'].set_enable(1)
-        self.dut['Vin'].set_voltage(2.1)
-        self.dut['Vin'].set_enable(1)
+        self.dut['V_in'].set_voltage(2.1)
+        self.dut['V_in'].set_enable(1)
 
         # enabling readout
-        self.dut['rx']['FE'] = 1
-        #self.dut['rx']['TLU'] = 1
-        self.dut['rx'].write()
+        self.dut['ENABLE_CHANNEL']['FE'] = 1
+        #self.dut['ENABLE_CHANNEL']['TLU'] = 1
+        self.dut['ENABLE_CHANNEL'].write()
 
     def configure(self):
         pass

@@ -54,6 +54,9 @@
 `include "cmd_seq/cmd_seq.v"
 `include "cmd_seq/cmd_seq_core.v"
 
+`include "fast_spi_rx/fast_spi_rx.v"
+`include "fast_spi_rx/fast_spi_rx_core.v"
+
 //`include "tdc_s3/tdc_s3.v"
 //`include "tdc_s3/tdc_s3_core.v"
 
@@ -181,17 +184,6 @@ wire TDC_OUT, TDC_TRIG_OUT,TDC_TDC_OUT;
 // TLU
 wire TLU_BUSY; // busy signal to TLU to de-assert trigger
 wire TLU_CLOCK;
-wire TRIGGER_ACCEPTED_FLAG; // from TLU FSM
-wire TRIGGER_ENABLE; // from CMD FSM
-wire TRIGGER_ACKNOWLEDGE_FLAG; // to TLU FSM
-
-wire CCPD_GATE,CCPD_PULSE_GATE;
-reg CCPD_PULSE_GATE_FF;
-always @ (posedge CLK_40)
-begin
-    CCPD_PULSE_GATE_FF <= CCPD_PULSE_GATE;
-end
-assign TRIGGER_ACKNOWLEDGE_FLAG = ~CCPD_PULSE_GATE & CCPD_PULSE_GATE_FF;
 
 // LEMO & RJ45 Tx
 assign TX[0] = TLU_CLOCK; // trigger clock; also connected to RJ45 output
@@ -246,6 +238,9 @@ localparam ADC_RX_CH2_HIGHADDR = ADC_RX_CH2_BASEADDR + 31; //
 localparam ADC_RX_CH3_BASEADDR = 16'h82E0; 
 localparam ADC_RX_CH3_HIGHADDR = ADC_RX_CH3_BASEADDR + 31; //
 
+localparam GPIO_TH_BASEADDR = 16'h8890;
+localparam GPIO_TH_HIGHADDR = 16'h88bf;
+
 // CCPD
 localparam CCPD_PULSE_INJ_BASEADDR= 16'h88B0;
 localparam CCPD_PULSE_INJ_HIGHADDR= CCPD_PULSE_INJ_BASEADDR + 15;
@@ -271,8 +266,15 @@ localparam CCPD_GPIO_SW_HIGHADDR = 16'h911f;
 localparam CCPD_TDC_BASEADDR = 16'h8870;
 localparam CCPD_TDC_HIGHADDR = 16'h888f;
 
-localparam GPIO_TH_BASEADDR = 16'h8890;
-localparam GPIO_TH_HIGHADDR = 16'h88af;
+localparam CCPD_RX_ADDR_BASEADDR = 16'h88e0;
+localparam CCPD_RX_ADDR_HIGHADDR = 16'h88ff;
+
+localparam CCPD_RX_TIMESTAMP_BASEADDR = 16'h88d0;
+localparam CCPD_RX_TIMESTAMP_HIGHADDR = 16'h88ef;
+
+localparam CCPD_PULSE_SYNC_BASEADDR= 16'h88d0;
+localparam CCPD_PULSE_SYNC_HIGHADDR= CCPD_PULSE_SYNC_BASEADDR + 15;
+
 
 // -------  BUS SYGNALING  ------- //
 wire [15:0] BUS_ADD;
@@ -298,13 +300,26 @@ wire CMD_EXT_START_FLAG;
 wire CMD_EXT_START_ENABLE; // from CMD FSM
 wire CMD_READY; // to TLU FSM
 wire CMD_START_FLAG; // sending FE command triggered by external devices
+wire CMD_EXT_START_FLAG_MONHIT;
 reg MONHIT_FF;
 always @ (posedge CLK_40)
 begin
     MONHIT_FF <= MONHIT;
 end
-assign CMD_EXT_START_FLAG = MONHIT & ~MONHIT_FF;
-cmd_seq 
+assign CMD_EXT_START_FLAG_MONHIT = MONHIT & ~MONHIT_FF;
+wire CCPD_PULSE_INJ,CCPD_PULSE_GATE;
+wire CMD_EXT_START_FLAG_CCPD_INJ;
+reg CCPD_INJECTION_FF;
+always @ (posedge CLK_40)
+begin
+    CMD_EXT_START_FLAG_FF <= CMD_EXT_START_FLAG_IN;
+end
+assign CMD_EXT_START_FLAG_CCPD_INJ = (CCPD_INJECTION & ~CCPD_INJECTION_FF) & CCPD_PULSE_GATE;
+wire CMD_EXT_START_FLAG_TLU;
+assign CMD_EXT_START_FLAG_TLU=1'b0;
+wire [0:1] CCPD_CMD_EXT_SW;
+//assign CMD_EXT_START_FLAG = CCPD_CMD_EXT_SW[1] ? (CCPD_CMD_EXT_SW[0]? CMD_EXT_START_FLAG_CCPD_INJ:CMD_EXT_START_FLAG_TLU):
+//                                                 (CCPD_CMD_EXT_SW[0]? CMD_EXT_START_FLAG_MONHIT:1'b0);//cmd_seq 
 #( 
     .BASEADDR(CMD_BASEADDR),
     .HIGHADDR(CMD_HIGHADDR)
@@ -365,7 +380,7 @@ fei4_rx
 );
 
 wire [3:0] NOT_CONNECTED_RX;
-wire ADC_SEL, TLU_SEL, CCPD_TDC_SEL,FE_SEL;
+wire ADC_SEL, TLU_SEL,CCPD_RX_SEL,CCPD_TDC_SEL,FE_SEL;
 gpio 
 #( 
     .BASEADDR(GPIO_RX_BASEADDR),
@@ -379,7 +394,7 @@ gpio
     .BUS_DATA(BUS_DATA),
     .BUS_RD(BUS_RD),
     .BUS_WR(BUS_WR),
-    .IO({NOT_CONNECTED_RX,ADC_SEL,CCPD_TDC_SEL,FE_SEL,TLU_SEL})
+    .IO({CCPD_RX_SEL,ADC_SEL,CCPD_TDC_SEL,NOT_CONNECTED_RX[0],TLU_SEL,FE_SEL})
 );
 
 wire TLU_FIFO_READ;
@@ -387,6 +402,11 @@ wire TLU_FIFO_EMPTY;
 wire [31:0] TLU_FIFO_DATA;
 wire TLU_FIFO_PEEMPT_REQ;
 wire [31:0] TIMESTAMP;
+wire TRIGGER_ACCEPTED_FLAG; // from TLU FSM
+wire TRIGGER_ENABLE; // from CMD FSM
+wire TRIGGER_ACKNOWLEDGE_FLAG; // to TLU FSM
+assign TRIGGER_ACKNOWLEDGE_FLAG = 1'b0;
+
 tlu_controller #(
     .BASEADDR(TLU_BASEADDR),
     .HIGHADDR(TLU_HIGHADDR),
@@ -550,7 +570,7 @@ wire ADC_EN;
 //////////////////////
 // CCPD
 assign CCPD_RB=1'b0;
-wire [6:0] NC_CCPD_GPIO;
+wire [4:0] NC_CCPD_GPIO;
 gpio 
 #( 
     .BASEADDR(CCPD_GPIO_SW_BASEADDR),
@@ -564,7 +584,7 @@ gpio
     .BUS_DATA(BUS_DATA),
     .BUS_RD(BUS_RD),
     .BUS_WR(BUS_WR),
-    .IO({NC_CCPD_GPIO,CCPD_ADC_TRIG_GATE_SW})
+    .IO({NC_CCPD_GPIO,CCPD_CMD_EXT_SW,CCPD_ADC_TRIG_GATE_SW})
 );
 
 wire CCPD_GATE_EXT_START;
@@ -667,7 +687,13 @@ spi
     .SEN(CCPD_AEN),
     .SLD(CCPD_ALD)
 );
-spi
+assign CCPD_NLD=1'b0;
+assign CCPD_NEN=1'b0;
+assign CCPD_NSIN=1'b0;
+assign CCPD_BLD=1'b0;
+assign CCPD_BEN=1'b0;
+assign CCPD_BSIN=1'b0;
+/*spi
 #(         
     .BASEADDR(CCPD_SPI_B_BASEADDR), 
     .HIGHADDR(CCPD_SPI_B_HIGHADDR),
@@ -710,6 +736,58 @@ spi
     .SDO(CCPD_NSOUT),
     .SEN(CCPD_NEN),
     .SLD(CCPD_NLD)
+);*/
+//RX
+wire FIFO_READ_CCPD_RX_ADDR;
+wire FIFO_EMPTY_CCPD_RX_ADDR;
+wire [31:0] FIFO_DATA_CCPD_RX_ADDR;
+wire CCPD_RX_EN;
+assign CCPD_RX_EN=1'b0;
+fast_spi_rx
+#(
+    .BASEADDR(CCPD_RX_ADDR_BASEADDR),
+    .HIGHADDR(CCPD_RX_ADDR_HIGHADDR),    
+    .IDENTYFIER(4'b0001)
+) i_ccpd_fast_spi_rx_addr(
+    .BUS_CLK(BUS_CLK),
+    .BUS_RST(BUS_RST),
+    .BUS_ADD(BUS_ADD),
+    .BUS_DATA(BUS_DATA),
+    .BUS_RD(BUS_RD),
+    .BUS_WR(BUS_WR),
+    
+    .SCLK(1'b0),
+    .SDI(1'b0),
+    .SEN(CCPD_RX_EN),
+      
+    .FIFO_READ(FIFO_READ_CCPD_RX_ADDR),
+    .FIFO_EMPTY(FIFO_EMPTY_CCPD_RX_ADDR),
+    .FIFO_DATA(FIFO_DATA_CCPD_RX_ADDR)
+    
+);
+wire FIFO_READ_CCPD_RX_TIMESTAMP;
+wire FIFO_EMPTY_CCPD_RX_TIMESTAMP;
+wire [31:0] FIFO_DATA_CCPD_RX_TIMESTAMP;
+fast_spi_rx
+#(
+    .BASEADDR(CCPD_RX_TIMESTAMP_BASEADDR),
+    .HIGHADDR(CCPD_RX_TIMESTAMP_HIGHADDR),     
+    .IDENTYFIER(4'b0010)
+) i_ccpd_fast_spi_rx_timestamp(
+    .BUS_CLK(BUS_CLK),
+    .BUS_RST(BUS_RST),
+    .BUS_ADD(BUS_ADD),
+    .BUS_DATA(BUS_DATA),
+    .BUS_RD(BUS_RD),
+    .BUS_WR(BUS_WR),
+    
+    .SCLK(1'b0),
+    .SDI(1'b0),
+    .SEN(CCPD_RX_EN),
+      
+    .FIFO_READ(FIFO_READ_CCPD_RX_TIMESTAMP),
+    .FIFO_EMPTY(FIFO_EMPTY_CCPD_RX_TIMESTAMP),
+    .FIFO_DATA(FIFO_DATA_CCPD_RX_TIMESTAMP)  
 );
 
 // TDC
@@ -751,19 +829,22 @@ tdc_s3
 // Arbiter
 wire ARB_READY_OUT, ARB_WRITE_OUT;
 wire [31:0] ARB_DATA_OUT;
-wire [5:0] READ_GRANT;
+wire [7:0] READ_GRANT;
 rrp_arbiter 
 #( 
-    .WIDTH(6)
+    .WIDTH(8)
 ) i_rrp_arbiter
 (
     .RST(BUS_RST),
     .CLK(BUS_CLK),
 
-    .WRITE_REQ({~FIFO_EMPTY_ADC[3] & ADC_SEL,~FIFO_EMPTY_ADC[2] & ADC_SEL,~FIFO_EMPTY_ADC[1] & ADC_SEL,
+    .WRITE_REQ({~FIFO_EMPTY_CCPD_RX_ADDR & CCPD_RX_SEL,~FIFO_EMPTY_CCPD_RX_TIMESTAMP & CCPD_RX_SEL,
+	             ~FIFO_EMPTY_ADC[3] & ADC_SEL,~FIFO_EMPTY_ADC[2] & ADC_SEL,~FIFO_EMPTY_ADC[1] & ADC_SEL,
                 ~FIFO_EMPTY_ADC[0] & ADC_SEL,~FE_FIFO_EMPTY & FE_SEL,~TLU_FIFO_EMPTY & TLU_SEL}),
-    .HOLD_REQ({4'b0, TLU_FIFO_PEEMPT_REQ}),
-    .DATA_IN({FIFO_DATA_ADC[3],FIFO_DATA_ADC[2],FIFO_DATA_ADC[1],FIFO_DATA_ADC[0],FE_FIFO_DATA,TLU_FIFO_DATA}),
+    .HOLD_REQ({7'b0, TLU_FIFO_PEEMPT_REQ}),
+    .DATA_IN({FIFO_DATA_CCPD_RX_ADDR,FIFO_DATA_CCPD_RX_TIMESTAMP,
+	           FIFO_DATA_ADC[3],FIFO_DATA_ADC[2],FIFO_DATA_ADC[1],FIFO_DATA_ADC[0],
+		        FE_FIFO_DATA,TLU_FIFO_DATA}),
     .READ_GRANT(READ_GRANT),
 
     .READY_OUT(ARB_READY_OUT),
@@ -773,7 +854,8 @@ rrp_arbiter
 assign TLU_FIFO_READ = READ_GRANT[0];
 assign FE_FIFO_READ = READ_GRANT[1];
 assign FIFO_READ_ADC= READ_GRANT[5:2];
-
+assign FIFO_READ_CCPD_RX_TIMESTAMP= READ_GRANT[6];
+assign FIFO_READ_CCPD_RX_ADDR= READ_GRANT[7];
 // SRAM
 wire USB_READ;
 assign USB_READ = FREAD & FSTROBE;
@@ -836,10 +918,10 @@ assign LED[2] = 0;
 assign LED[3] = 0;
 assign LED[4] = 0;
 
-assign CCPD_DEBUG[0] = CCPD_GATE; //DOUT 9
-assign CCPD_DEBUG[1] = 1'b0; //TRIGGER_ACKNOWLEDGE_FLAG; //DOUT10
-assign CCPD_DEBUG[2] = ADC_TRIGGER; //DOUT11
-assign CCPD_DEBUG[3] = CCPD_GATE_EXT_START; //DOUT12
+assign CCPD_DEBUG[0] = CCPD_PULSE_GATE; //DOUT 11
+assign CCPD_DEBUG[1] = CMD_EXT_START_FLAG; //TRIGGER_ACKNOWLEDGE_FLAG; //DOUT13
+assign CCPD_DEBUG[2] = CMD_EXT_START_FLAG_CCPD_INJ; //DOUT14
+assign CCPD_DEBUG[3] = CCPD_GATE_EXT_START; //DOUT15
 
 
 endmodule

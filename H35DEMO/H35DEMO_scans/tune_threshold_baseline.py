@@ -3,17 +3,14 @@ from time import time
 import numpy as np
 import progressbar
 
-import sys
-sys.path.append(r"D:\workspace\basil\v2.4.0")
-
+from pybar_fei4_interpreter.data_interpreter import PyDataInterpreter
+from pybar_fei4_interpreter.data_histograming import PyDataHistograming
 from pybar.analysis.analyze_raw_data import AnalyzeRawData
 from pybar.fei4.register_utils import make_box_pixel_mask_from_col_row, invert_pixel_mask
 from pybar.fei4_run_base import Fei4RunBase
 from pybar.run_manager import RunManager
 from pybar.analysis.plotting.plotting import plot_occupancy, plot_fancy_occupancy, plot_three_way
 from pybar.daq.readout_utils import data_array_from_data_iterable
-from pybar.analysis.RawDataConverter.data_interpreter import PyDataInterpreter
-from pybar.analysis.RawDataConverter.data_histograming import PyDataHistograming
 
 
 class ThresholdBaselineTuning(Fei4RunBase):
@@ -35,9 +32,6 @@ class ThresholdBaselineTuning(Fei4RunBase):
         "col_span": [1, 80],  # column range (from minimum to maximum value). From 1 to 80.
         "row_span": [1, 336],  # row range (from minimum to maximum value). From 1 to 336.
     }
-    
-#    def init_dut(self):
-#            pass
 
     def configure(self):
         if self.trig_count == 0:

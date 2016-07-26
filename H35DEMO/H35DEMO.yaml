@@ -72,24 +72,31 @@ hw_drivers:
     interface : USB
     base_addr : 0x18900
     mem_bytes : 187
-
   - name      : ccpd_spi_a
     type      : spi
     interface : USB
     base_addr : 0x18B00
     mem_bytes : 187
+#  - name      : ccpd_spi_b
+#    type      : spi
+#    interface : USB
+#    base_addr : 0x18D00
+#    mem_bytes : 187
 
-  - name      : ccpd_spi_b
-    type      : spi
-    interface : USB
-    base_addr : 0x18D00
-    mem_bytes : 187
+#  - name      : ccpd_spi_n
+#    type      : spi
+#    interface : USB
+#    base_addr : 0x18F00
+#    mem_bytes : 187
 
-  - name      : ccpd_spi_n
-    type      : spi
-    interface : USB
-    base_addr : 0x18F00
-    mem_bytes : 187
+#  - name      : CCPD_RX_ADDR
+#    type      : fast_spi_rx
+#    interface : USB
+#    base_addr : 0x188e0
+#  - name      : CCPD_RX_TIMESTAMP
+#    type      : fast_spi_rx
+#    interface : USB
+#    base_addr : 0x188d0
 
   - name      : ccpd_gpio_adc_th
     type      : gpio
@@ -113,7 +120,7 @@ hw_drivers:
     base_addr : 0x188B0
 
 registers:
-  - name        : Vin
+  - name        : V_in
     type        : FunctionalRegister
     hw_driver   : GPAC
     arg_names   : [value]
@@ -155,7 +162,7 @@ registers:
     arg_names   : [value]
     arg_add     : {'channel': 'VSRC3'}
 
-  - name        : rx
+  - name        : ENABLE_CHANNEL
     type        : StdRegister
     hw_driver   : gpio_rx
     size        : 8
@@ -163,19 +170,19 @@ registers:
       - name    : NC1
         size    : 1
         offset  : 5
-      - name    : NC
-        size    : 1
-        offset  : 4
       - name    : ADC
         size    : 1
-        offset  : 3
+        offset  : 4
       - name    : CCPD_TDC
         size    : 1
+        offset  : 3
+      - name    : NC
+        size    : 1
         offset  : 2
-      - name    : FE
+      - name    : TLU
         size    : 1
         offset  : 1
-      - name    : TLU
+      - name    : FE
         size    : 1
         offset  : 0
 
@@ -185,8 +192,11 @@ registers:
     size        : 8
     fields :
       - name    : NC1
-        size    : 7
+        size    : 5
         offset  : 7
+      - name    : CMD_TRIG # 0: none, 1: MONHIT, 2: TLU, 3: CCPD_GATE(inj)
+        size    : 2
+        offset  : 2
       - name    : ADC_TRIG_GATE
         size    : 1
         offset  : 0
@@ -389,7 +399,7 @@ registers:
         DACOut4 : 0x3F
         SPARE4  : 0
         DACOut5 : 0x3F
-        SPARE5  : 0
+        SPARE5  : 1
         SPARE6  : 0
         SPARE7  : 0
         SPARE8  : 0

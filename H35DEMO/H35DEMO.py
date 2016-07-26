@@ -41,7 +41,8 @@ class Log():
                     ,dat['CCPD_INJ']["REPEAT"],dat['CCPD_INJ']["EN"],dat['CCPD_INJ_VOLTAGE'])
         with open(self.logfile,"a") as f:
             f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_CONF_A',dat['CCPD_CONF_A']))
-            f.write("%s %s: %s\n"%H35DEMO_with_fei4(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_INJ',dat['CCPD_INJ']))    
+            f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_GATE',dat['CCPD_GATE']))  
+            f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_INJ',dat['CCPD_INJ']))   
             f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_INJ_VOLTAGE',dat['CCPD_INJ_VOLTAGE'])) 
 
 class H35DEMO():
@@ -82,14 +83,14 @@ class H35DEMO():
 
     def set_adc(self,adc_count=500,adc_delay=20,extrig="none"):
         # set gpio  TODO
-        self.dut['rx']['ADC'] = 1
+        self.dut['ENABLE_CHANNEL']['ADC'] = 1
         if extrig=="tlu":
-            self.dut['rx']['TLU'] = 1
+            self.dut['ENABLE_CHANNEL']['TLU'] = 1
         else:
-            self.dut['rx']['TLU'] = 0
-        self.dut['rx']['CCPD_TDC'] = 0
-        self.dut['rx']['FE'] = 0
-        self.dut['rx'].write()
+            self.dut['ENABLE_CHANNEL']['TLU'] = 0
+        self.dut['ENABLE_CHANNEL']['CCPD_TDC'] = 0
+        self.dut['ENABLE_CHANNEL']['FE'] = 0
+        self.dut['ENABLE_CHANNEL'].write()
 
         ## set gate for tlu communication
         self.dut["CCPD_GATE"].reset()
@@ -226,26 +227,39 @@ class H35DEMO():
             pass
         print self.dut["CCPD_CONF_A"][:]
     def set_inj_all(self,inj_high=1,inj_low=0,inj_n=0,inj_width=500,extrig=False):
-        ### TODO implement extrig=True (set gate)
         self.dut["CCPD_INJ"].reset()
-        self.dut["CCPD_INJ"]["DELAY"]=inj_width
+        if inj_n==1:
+            self.dut["CCPD_INJ"]["DELAY"]=5
+        else:
+            self.dut["CCPD_INJ"]["DELAY"]=inj_width
         self.dut["CCPD_INJ"]["WIDTH"]=inj_width
         self.dut["CCPD_INJ"]["REPEAT"]=inj_n
-        self.dut["CCPD_INJ"]["EN"]=extrig
+        self.dut["CCPD_INJ"]["EN"]=True
         self.dut["CCPD_INJ_HIGH"].set_voltage(inj_high)
         self.inj_high=inj_high
         self.dut["CCPD_INJ_LOW"].set_voltage(inj_low)
         self.inj_low=inj_low
+        
+        self.dut["CCPD_GATE"].reset()
+        self.dut["CCPD_GATE"]["REPEAT"]=1
+        self.dut["CCPD_GATE"]["DELAY"]=1
+        if inj_n==0 :
+            self.dut["CCPD_GATE"]["WIDTH"]=(self.dut["CCPD_INJ"]["DELAY"]+inj_width)*100+5
+        else:
+            self.dut["CCPD_GATE"]["WIDTH"]=(self.dut["CCPD_INJ"]["DELAY"]+inj_width)*inj_n+5
+        self.dut["CCPD_GATE"]["EN"]=extrig
+
     def inject(self):
         self.dut["CCPD_INJ"]['START']=1
         while not self.dut['CCPD_INJ']['READY'] and self.dut["CCPD_INJ"]["REPEAT"]!=0:
-            pass
+            time.sleep(0.003)
     def show(self):
         dat={}
         dat["CCPD_CONF_A"]=str(self.dut["CCPD_CONF_A"][:])
         dat["CCPD_INJ"]=self.dut["CCPD_INJ"].get_configuration()
+        dat["CCPD_GATE"]=self.dut["CCPD_GATE"].get_configuration()
         dat["CCPD_INJ_VOLTAGE"]="%f,%f"%(self.inj_high, self.inj_low)
-        self.l.show(dat)
+        self.logger.show(dat)
 
 if __name__=="__main__":
     chip = H35DEMO()
