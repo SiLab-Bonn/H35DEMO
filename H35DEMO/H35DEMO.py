@@ -225,7 +225,7 @@ class H35DEMO():
         self.dut["CCPD_CONF_A"].start()
         while not self.dut['CCPD_CONF_A'].is_ready:
             pass
-        print self.dut["CCPD_CONF_A"][:]
+        self.logger.info("configure:%s"%str(self.dut["CCPD_CONF_A"][:]))
     def set_inj_all(self,inj_high=1,inj_low=0,inj_n=0,inj_width=500,extrig=False):
         self.dut["CCPD_INJ"].reset()
         if inj_n==1:
@@ -234,7 +234,7 @@ class H35DEMO():
             self.dut["CCPD_INJ"]["DELAY"]=inj_width
         self.dut["CCPD_INJ"]["WIDTH"]=inj_width
         self.dut["CCPD_INJ"]["REPEAT"]=inj_n
-        self.dut["CCPD_INJ"]["EN"]=True
+        self.dut["CCPD_INJ"]["EN"]=extrig
         self.dut["CCPD_INJ_HIGH"].set_voltage(inj_high)
         self.inj_high=inj_high
         self.dut["CCPD_INJ_LOW"].set_voltage(inj_low)

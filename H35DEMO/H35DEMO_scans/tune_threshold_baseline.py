@@ -25,11 +25,11 @@ class ThresholdBaselineTuning(Fei4RunBase):
         "scan_parameters": [('Vthin_AltFine', (120, None)), ('Step', 60)],  # the Vthin_AltFine range, number of steps (repetition at constant Vthin_AltFine)
         "increase_threshold": 5,  # increasing the global threshold (Vthin_AltFine) after tuning
         "disabled_pixels_limit": 0.01,  # limit of disabled pixels, fraction of all pixels
-        "use_enable_mask": False,  # if True, enable mask from config file anded with mask (from col_span and row_span), if False use mask only for enable mask
+        "use_enable_mask": True,  # if True, enable mask from config file anded with mask (from col_span and row_span), if False use mask only for enable mask
         "n_triggers": 10000,  # total number of trigger sent to FE
         "trigger_rate_limit": 500,  # artificially limiting the trigger rate, in BCs (25ns)
         "trig_count": 0,  # FE-I4 trigger count, number of consecutive BCs, 0 means 16, from 0 to 15
-        "col_span": [1, 80],  # column range (from minimum to maximum value). From 1 to 80.
+        "col_span": [1, 74],  # column range (from minimum to maximum value). From 1 to 80.
         "row_span": [1, 336],  # row range (from minimum to maximum value). From 1 to 336.
     }
 

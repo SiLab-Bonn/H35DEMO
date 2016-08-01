@@ -60,29 +60,27 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
         if extrig=="inj" and self.dut["CCPD_INJ"]["REPEAT"]!=0:
            run_conf["ccpd_inj"]=True
         self.rmg.run_run(H35DEMO_scans.ExtTriggerScan,run_conf=run_conf,use_thread=use_thread)
-    def set_hitmon_en(self,pix):
+    def set_hitmon_en(self,pix,fei4=True):
         imon_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('Imon')
         if isinstance(pix,str):
             if pix=="all":
-                imon_pixel_mask[:12,self.row_offset:self.row_offset+76]=0
+                imon_pixel_mask[:,:]=0
             else: ###"none"
-                imon_pixel_mask[:12,self.row_offset:self.row_offset+76]=1
+                imon_pixel_mask[:,:]=1
         else:
             if isinstance(pix[0], int):
                 pix=[pix]
             if np.shape(pix)[1]==2:
-              imon_pixel_mask[:12,self.row_offset:self.row_offset+76]=1
+              imon_pixel_mask=1
               for p in pix:
-                fe_p=self.H35DEMO2fei4(p,True)
+                if fei4==True:
+                    fe_p=self.H35DEMO2fei4(p,True)
+                else:
+                    fe_p=p
                 imon_pixel_mask[fe_p[0],fe_p[1]]=0
-                ###
-                pix3=[]
-                pix3.append(self.fei42H35DEMO(fe_p,0))
-                pix3.append(self.fei42H35DEMO(fe_p,1))
-                pix3.append(self.fei42H35DEMO(fe_p,2))
-                self.logger.info("set_hitmon_en fei4:[%d,%d],pix:%s"%(fe_p[0],fe_p[1],str(pix3)))
-            elif np.shape(pix)[1]==76:
-                imon_pixel_mask[:12,self.row_offset:self.row_offset+76]=pix
+                self.logger.info("set_hitmon_en fei4:[%d,%d],pix:%s"%(fe_p[0],fe_p[1]))
+            elif np.shape(pix)[1]==336:
+                imon_pixel_mask=pix
         self.rmg.current_run.register.set_pixel_register_value('Imon', imon_pixel_mask)
         commands = []
         commands.extend(self.rmg.current_run.register.get_commands("ConfMode"))
