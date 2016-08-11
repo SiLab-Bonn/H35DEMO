@@ -175,7 +175,25 @@ class H35DEMO():
                 for i in range(23):
                     self.dut["CCPD_CONF_A"]["ROW"][23-i-1]["InjEn"]=0
                     self.dut["CCPD_CONF_A"]["ROW"][23-i-1]["AmpToTest"]=0
-                    self.dut["CCPD_CONF_A"]["ROW"][23-i-1]["Ampout"]=0    
+                    self.dut["CCPD_CONF_A"]["ROW"][23-i-1]["Ampout"]=0
+            elif "fe_inj" in k:
+                col=[0]*300
+                row=[0]*23
+                if isinstance(v[0],int):
+                    v=[v]
+                elif isinstance(v,str):
+                    v=[]
+                for vv in v:
+                    row[vv[0]]=1
+                    col[vv[1]]=1
+                for i,c in enumerate(col):
+                    self.dut["CCPD_CONF_A"]["COL"][300-i-1]["CaliAnaBuf"]=c
+                    self.dut["CCPD_CONF_A"]["COL"][300-i-1]["TestToAnaBuf"]=c
+                    self.dut["CCPD_CONF_A"]["COL"][300-i-1]["InjEn"]=0
+                for i,r in enumerate(row):
+                    self.dut["CCPD_CONF_A"]["ROW"][23-i-1]["InjEn"]=0
+                    self.dut["CCPD_CONF_A"]["ROW"][23-i-1]["AmpToTest"]=r
+                    self.dut["CCPD_CONF_A"]["ROW"][23-i-1]["Ampout"]=0  
             elif "inj" in k:
                 col=[0]*300
                 row=[0]*23

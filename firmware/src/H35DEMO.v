@@ -295,7 +295,7 @@ wire FIFO_NOT_EMPTY; // raised, when SRAM FIFO is not empty
 wire FIFO_FULL, FIFO_NEAR_FULL; // raised, when SRAM FIFO is full / near full
 wire FIFO_READ_ERROR; // raised, when attempting to read from SRAM FIFO when it is empty
 
-// FEI4
+// FEI4g
 wire CMD_EXT_START_FLAG;
 wire CMD_EXT_START_ENABLE; // from CMD FSM
 wire CMD_READY; // to TLU FSM
@@ -304,13 +304,16 @@ wire CMD_EXT_START_FLAG_IN;
 reg [3:0] CMD_EXT_START_FLAG_FF;
 wire [0:1] CCPD_CMD_EXT_SW;
 wire CCPD_PULSE_GATE;
-assign CMD_EXT_START_FLAG_IN = CCPD_CMD_EXT_SW[1] ? (CCPD_CMD_EXT_SW[0]? (CCPD_INJECTION & CCPD_PULSE_GATE) :1'b0):
+////this does not work
+assign CMD_EXT_START_FLAG_IN = CCPD_CMD_EXT_SW[1] ? (CCPD_CMD_EXT_SW[0]? CCPD_INJECTION : LEMO_RX[0]):
                                                     (CCPD_CMD_EXT_SW[0]? MONHIT:1'b0);//cmd_seq 
 always @ (posedge CLK_40)
 begin
     CMD_EXT_START_FLAG_FF <= {CMD_EXT_START_FLAG_FF[2:0],CMD_EXT_START_FLAG_IN};
 end
-assign CMD_EXT_START_FLAG = CMD_EXT_START_FLAG_IN & (~CMD_EXT_START_FLAG_FF[0] | ~CMD_EXT_START_FLAG_FF[1]);
+assign CMD_EXT_START_FLAG = CCPD_PULSE_GATE & CMD_EXT_START_FLAG_IN & (~CMD_EXT_START_FLAG_FF[0] | ~CMD_EXT_START_FLAG_FF[1]);
+
+wire TRIGGER_ACCEPTED_FLAG; // from TLU FSM
 cmd_seq
 #( 
     .BASEADDR(CMD_BASEADDR),
@@ -394,10 +397,8 @@ wire TLU_FIFO_EMPTY;
 wire [31:0] TLU_FIFO_DATA;
 wire TLU_FIFO_PEEMPT_REQ;
 wire [31:0] TIMESTAMP;
-wire TRIGGER_ACCEPTED_FLAG; // from TLU FSM
 wire TRIGGER_ENABLE; // from CMD FSM
 wire TRIGGER_ACKNOWLEDGE_FLAG; // to TLU FSM
-assign TRIGGER_ACKNOWLEDGE_FLAG = 1'b0;
 
 tlu_controller #(
     .BASEADDR(TLU_BASEADDR),
@@ -419,8 +420,8 @@ tlu_controller #(
     
     .FIFO_PREEMPT_REQ(TLU_FIFO_PEEMPT_REQ),
     
-    .TRIGGER(8'b0),
-    .TRIGGER_VETO({7'b0,FIFO_FULL}),
+    .TRIGGER({4'b0,CCPD_INJECTION,1'b0,LEMO_RX[0],MONHIT}),
+    .TRIGGER_VETO({6'b0,~CCPD_PULSE_GATE,FIFO_FULL}),
      
     .TRIGGER_ACKNOWLEDGE(TRIGGER_ACKNOWLEDGE_FLAG),
     .TRIGGER_ACCEPTED_FLAG(TRIGGER_ACCEPTED_FLAG),
@@ -432,8 +433,8 @@ tlu_controller #(
     
     .TIMESTAMP(TIMESTAMP)
 );
-wire TRIGGER_ACCEPTED_FLAG_SYNC;
-
+assign TRIGGER_ACKNOWLEDGE_FLAG = CMD_READY; //TODO CMD_READY
+//wire TRIGGER_ACCEPTED_FLAG_SYNC;
 //cdc_pulse_sync ext_start_sync (.clk_in(CLK_40), .pulse_in(TRIGGER_ACCEPTED_FLAG), .clk_out(SPI_CLK), .pulse_out(TRIGGER_ACCEPTED_FLAG_SYNC)); 
 
 ///////////////////////////
@@ -868,7 +869,7 @@ assign LED[3] = 0;
 assign LED[4] = 0;
 
 assign CCPD_DEBUG[0] = CCPD_PULSE_GATE; //DOUT 11
-assign CCPD_DEBUG[1] = CMD_EXT_START_FLAG; //TRIGGER_ACKNOWLEDGE_FLAG; //DOUT13
+assign CCPD_DEBUG[1] = TRIGGER_ACCEPTED_FLAG; //TRIGGER_ACKNOWLEDGE_FLAG; //DOUT13
 assign CCPD_DEBUG[2] = CMD_EXT_START_ENABLE; //DOUT14
 assign CCPD_DEBUG[3] = CMD_READY; //DOUT15
 

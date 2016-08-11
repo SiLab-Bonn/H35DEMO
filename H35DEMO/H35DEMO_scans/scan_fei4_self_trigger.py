@@ -25,6 +25,7 @@ class FEI4SelfTriggerScan(Fei4RunBase):
         "use_enable_mask_for_imon": False,  # if True, apply inverted Enable pixel mask to Imon pixel mask
         "no_data_timeout": 10,  # no data timeout after which the scan will be aborted, in seconds
         "scan_timeout": 10,  # timeout for scan after which the scan will be stopped, in seconds
+        "ccpd_inj" : True
     }
 
     def configure(self):
@@ -61,9 +62,19 @@ class FEI4SelfTriggerScan(Fei4RunBase):
 
     def scan(self):
         with self.readout():
+            if self.ccpd_inj:
+                logging.info("Start injection")
+                if self.dut["CCPD_INJ"]["REPEAT"]==0:
+                    self.dut["CCPD_GATE"].start()
+                else:
+                    self.dut["CCPD_INJ"].start()
             got_data = False
             start = time()
-            while not self.stop_run.wait(1.0):
+            while not self.stop_run.wait(0.1):
+                if self.ccpd_inj:
+                     if (self.dut["CCPD_INJ"]["REPEAT"]==0 and self.dut["CCPD_GATE"]["READY"]==1) \
+                                                            or self.dut["CCPD_INJ"]["READY"]==1:
+                         self.stop(msg="Injection done")
                 if not got_data:
                     if self.fifo_readout.data_words_per_second() > 0:
                         got_data = True
@@ -77,9 +88,10 @@ class FEI4SelfTriggerScan(Fei4RunBase):
 
     def analyze(self):
         with AnalyzeRawData(raw_data_file=self.output_filename, create_pdf=True) as analyze_raw_data:
-            analyze_raw_data.create_cluster_size_hist = True  # can be set to false to omit cluster hit creation, can save some time, standard setting is false
+            #analyze_raw_data.create_cluster_size_hist = True  # can be set to false to omit cluster hit creation, can save some time, standard setting is false
             analyze_raw_data.create_source_scan_hist = True
-            analyze_raw_data.create_cluster_tot_hist = True
+            analyze_raw_data.create_hit_table = True
+            #analyze_raw_data.create_cluster_tot_hist = True
             analyze_raw_data.interpreter.set_warning_output(False)
             analyze_raw_data.interpret_word_table()
             analyze_raw_data.interpreter.print_summary()

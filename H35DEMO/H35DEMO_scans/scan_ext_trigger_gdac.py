@@ -15,8 +15,8 @@ class ExtTriggerGdacScan(ExtTriggerScan):
     '''
     _default_run_conf = ExtTriggerScan._default_run_conf.copy()
     _default_run_conf.update({
-        "scan_parameters": [('GDAC', None)],  # list of values, string with calibration file name, None: use 50 GDAC values
-        "interpolate_calibration": True,  # interpolate GDAC values to have equally spaced thresholds, otherwise take GDACs used during calibration
+        "scan_parameters": [('GDAC', range(35,50,1))],  # list of values, string with calibration file name, None: use 50 GDAC values
+        "interpolate_calibration": False,  # interpolate GDAC values to have equally spaced thresholds, otherwise take GDACs used during calibration
         "interpolation_thresholds": range(0, 600, 1)  # threshold values in PlsrDAC
     })
 
@@ -28,18 +28,18 @@ class ExtTriggerGdacScan(ExtTriggerScan):
             altf = self.register.get_global_register_value("Vthin_AltFine")
             curr_gdac = self.register_utils.get_gdac(altc=altc, altf=altf)
             self.gdacs = np.unique(np.logspace(np.log10(curr_gdac), np.log10(6000), 60).astype(np.int)).tolist() + range(6500, 25001, 500)
-        elif isinstance(self.scan_parameters.GDAC, basestring):  # deduce GDACs from calibration file
-            if self.interpolate_calibration:
-                self.gdacs = self.get_gdacs_from_interpolated_calibration(self.scan_parameters.GDAC, self.interpolation_thresholds)
-            else:
-                self.gdacs = self.get_gdacs_from_calibration_file(self.scan_parameters.GDAC)
+        #elif isinstance(self.scan_parameters.GDAC, basestring):  # deduce GDACs from calibration file
+        #    if self.interpolate_calibration:
+        #        self.gdacs = self.get_gdacs_from_interpolated_calibration(self.scan_parameters.GDAC, self.interpolation_thresholds)
+        #    else:
+        #        self.gdacs = self.get_gdacs_from_calibration_file(self.scan_parameters.GDAC)
         else:  # Use defined GDACs
             self.gdacs = self.scan_parameters.GDAC
 
         logging.info("Scanning %s from %d to %d in %d steps", 'GDAC', self.gdacs[0], self.gdacs[-1], len(self.gdacs))
 
     def scan(self):
-        for gdac in range(35,50,1): #self.gdacs:
+        for gdac in self.gdacs:
             if self.abort_run.is_set():
                 break
             self.register_utils.set_gdac(gdac)

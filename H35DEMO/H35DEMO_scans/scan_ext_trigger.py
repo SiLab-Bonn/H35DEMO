@@ -26,7 +26,7 @@ class ExtTriggerScan(Fei4RunBase):
         "trigger_latency": 240,  # FE-I4 trigger latency, in BCs, external scintillator / TLU / HitOR: 232, USBpix self-trigger: 220, injection from ccpdlf 230
         "trigger_delay": 8,  # trigger delay, in BCs
         "trigger_rate_limit": 500,  # artificially limiting the trigger rate, in BCs (25ns)
-        "col_span": [1, 80],  # defining active column interval, 2-tuple, from 1 to 80
+        "col_span": [1, 74],  # defining active column interval, 2-tuple, from 1 to 80
         "row_span": [1, 336],  # defining active row interval, 2-tuple, from 1 to 336
         "update_c_high_low": False,  # if True, use col_span and row_span to define an active region regardless of the Enable pixel register. If False, use col_span and row_span to define active region by also taking Enable pixel register into account.
         "use_enable_mask_for_imon": False,
@@ -35,6 +35,7 @@ class ExtTriggerScan(Fei4RunBase):
         "max_triggers": 100000,  # maximum triggers after which the scan will be stopped, in seconds
         "enable_tdc": False,  # if True, enables TDC (use RX2)
         "reset_rmake_box_pixel_mask_from_col_rowx_on_error": False,  # long scans have a high propability for ESD related data transmission errors; recover and continue here
+        "create_analyzed_data": False,
         "ccpd_inj": True
     }
 
@@ -114,19 +115,21 @@ class ExtTriggerScan(Fei4RunBase):
         logging.info('Total amount of triggers collected: %d', self.dut['TLU']['TRIGGER_COUNTER'])
 
     def analyze(self):
-        with AnalyzeRawData(raw_data_file=self.output_filename, create_pdf=True) as analyze_raw_data:
-            analyze_raw_data.create_source_scan_hist = True
-            analyze_raw_data.create_cluster_size_hist = False
-            analyze_raw_data.create_cluster_tot_hist = False
-            analyze_raw_data.align_at_trigger = True
-            if self.enable_tdc:
-                analyze_raw_data.create_tdc_counter_hist = True  # histogram all TDC words
-                analyze_raw_data.create_tdc_hist = True  # histogram the hit TDC information
-                analyze_raw_data.align_at_tdc = False  # align events at the TDC word)
-            analyze_raw_data.interpreter.set_warning_output(False)
-            analyze_raw_data.interpret_word_table()
-            analyze_raw_data.interpreter.print_summary()
-            analyze_raw_data.plot_histograms()
+        if self.create_analyzed_data==True:
+            with AnalyzeRawData(raw_data_file=self.output_filename, create_pdf=True) as analyze_raw_data:
+                analyze_raw_data.create_source_scan_hist = True
+                analyze_raw_data.create_hit_table = True
+                analyze_raw_data.create_cluster_size_hist = False
+                analyze_raw_data.create_cluster_tot_hist = False
+                analyze_raw_data.align_at_trigger = True
+                if self.enable_tdc:
+                    analyze_raw_data.create_tdc_counter_hist = True  # histogram all TDC words
+                    analyze_raw_data.create_tdc_hist = True  # histogram the hit TDC information
+                    analyze_raw_data.align_at_tdc = False  # align events at the TDC word)
+                analyze_raw_data.interpreter.set_warning_output(False)
+                analyze_raw_data.interpret_word_table()
+                analyze_raw_data.interpreter.print_summary()
+                analyze_raw_data.plot_histograms()
         #print np.asarray(ccpdlf_util.load_fei4data("%s_interpreted.h5"%self.output_filename,dataname="HistOcc",row_offset=self.row_offset),int)
     def start_readout(self, **kwargs):
         if kwargs:

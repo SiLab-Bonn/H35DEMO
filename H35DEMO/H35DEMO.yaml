@@ -6,7 +6,7 @@ transfer_layer:
   - name     : USB
     type     : SiUsb
     init     :
-        bit_file : ../firmware/ise/H35DEMO.bit
+        bit_file : ../firmware/bit/H35DEMO.bit
 
 
 hw_drivers:

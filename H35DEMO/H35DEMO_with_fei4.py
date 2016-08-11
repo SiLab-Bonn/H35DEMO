@@ -11,6 +11,10 @@ import H35DEMO
 import H35DEMO_scans
 import pybar
 
+def H35DEMO2fei4(pix):
+    fe_pix=[38-pix[0],pix[1]]
+    return fe_pix
+
 class H35DEMOFei4(H35DEMO.H35DEMO):
     def init(self):
         # init fei4
@@ -51,16 +55,23 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
             self.dut["ENABLE_CHANNEL"]["TLU"]=0
             self.dut["CCPD_SW"]["CMD_TRIG"]=1
         else: ##'inj'CMD_TRIG # 0: none, 1: MONHIT, 2: TLU, 3: CCPD_GATE(inj)
-            self.dut["ENABLE_CHANNEL"]["TLU"]=0
+            self.dut["ENABLE_CHANNEL"]["TLU"]=1  ## !!
             self.dut["CCPD_SW"]["CMD_TRIG"]=3
         self.dut["ENABLE_CHANNEL"].write()
         self.dut["CCPD_SW"].write()
         if run_conf==None:
            run_conf={}
-        if extrig=="inj" and self.dut["CCPD_INJ"]["REPEAT"]!=0:
+        if extrig=="inj":
            run_conf["ccpd_inj"]=True
         self.rmg.run_run(H35DEMO_scans.ExtTriggerScan,run_conf=run_conf,use_thread=use_thread)
-    def set_hitmon_en(self,pix,fei4=True):
+    def get_fe_hitmon(self,fei4=True):
+        imon_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('Imon')
+        ret=np.argwhere(imon_pixel_mask==0)
+        if fei4==False:
+          pass ## TODO convert to H35DEMO's pixel
+        return ret
+    def set_fe_hitmon(self,pix,fei4=True):
+        s=""
         imon_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('Imon')
         if isinstance(pix,str):
             if pix=="all":
@@ -71,14 +82,14 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
             if isinstance(pix[0], int):
                 pix=[pix]
             if np.shape(pix)[1]==2:
-              imon_pixel_mask=1
+              imon_pixel_mask[:,:]=1
               for p in pix:
                 if fei4==True:
-                    fe_p=self.H35DEMO2fei4(p,True)
-                else:
                     fe_p=p
+                else:
+                    fe_p=self.H35DEMO2fei4(p,True)
                 imon_pixel_mask[fe_p[0],fe_p[1]]=0
-                self.logger.info("set_hitmon_en fei4:[%d,%d],pix:%s"%(fe_p[0],fe_p[1]))
+                s=s+" [%d,%d]"%(fe_p[0],fe_p[1])
             elif np.shape(pix)[1]==336:
                 imon_pixel_mask=pix
         self.rmg.current_run.register.set_pixel_register_value('Imon', imon_pixel_mask)
@@ -87,7 +98,45 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
         commands.extend(self.rmg.current_run.register.get_commands("WrFrontEnd", same_mask_for_all_dc=False, name='Imon'))
         commands.extend(self.rmg.current_run.register.get_commands("RunMode"))
         self.rmg.current_run.register_utils.send_commands(commands)
-    def set_fdac_pix(self,pix,fdac):
+        self.logger.info("set_hitmon_en fei4:%s"%s)
+    def get_fe_tdac(self,pix,fei4=True):
+        tdac_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('TDAC')
+        if isinstance(pix,str):
+            if pix=="all":
+                if fei4==False:
+                    pass
+                return tdac_pixel_mask ## TODO convert..
+        else:
+            ret=[]
+            if isinstance(pix[0], int):
+                pix=[pix]
+            for p in pix:
+               ret.append(tdac_pixel_mask[p[0],p[1]])
+            if fei4==False:
+               pass ## convert
+            return ret
+    def set_fe_tdac(self,pix,tdac,fei4=True):
+        tdac_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('TDAC')
+        if isinstance(pix,str):
+            if pix=="all":
+                tdac_pixel_mask[:12,self.row_offset:self.row_offset+76]=tdac
+        else:
+            if isinstance(pix[0], int):
+                pix=[pix]
+            for p in pix:
+                if fei4==True:
+                    fe_p=p
+                else:
+                    fe_p=self.H35DEMO2fei4(p,True)
+                fe_p=tdac_pixel_mask[fe_p[0],fe_p[1]]=tdac
+                self.logger.info("set_tdac fdac:%d fei4:[%d,%d]"%(tdac, fe_p[0],fe_p[1]))
+        self.rmg.current_run.register.set_pixel_register_value('FDAC', tdac_pixel_mask)
+        commands = []
+        commands.extend(self.rmg.current_run.register.get_commands("ConfMode"))
+        commands.extend(self.rmg.current_run.register.get_commands("WrFrontEnd", same_mask_for_all_dc=False, name=["TDAC"]))
+        commands.extend(self.rmg.current_run.register.get_commands("RunMode"))
+        self.rmg.current_run.register_utils.send_commands(commands)
+    def set_fe_fdac(self,pix,fdac,fei4=True):
         fdac_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('FDAC')
         if isinstance(pix,str):
             if pix=="all":
@@ -96,20 +145,32 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
             if isinstance(pix[0], int):
                 pix=[pix]
             for p in pix:
-                fe_p=self.H35DEMO2fei4(p,True)
+                if fei4==True:
+                    fe_p=p
                 fdac_pixel_mask[fe_p[0],fe_p[1]]=fdac
-                ###
-                pix3=[]
-                pix3.append(self.fei42H35DEMO(fe_p,0))
-                pix3.append(self.fei42H35DEMO(fe_p,1))
-                pix3.append(self.fei42H35DEMO(fe_p,2))
-                self.logger.info("set_hitmon_en fdac:%d fei4:[%d,%d],pix:"%(fdac, fe_p[0],fe_p[1]),pix3)
+                self.logger.info("set_hitmon_en fdac:%d fei4:[%d,%d]"%(fdac, fe_p[0],fe_p[1]))
         self.rmg.current_run.register.set_pixel_register_value('FDAC', fdac_pixel_mask)
         commands = []
         commands.extend(self.rmg.current_run.register.get_commands("ConfMode"))
         commands.extend(self.rmg.current_run.register.get_commands("WrFrontEnd", same_mask_for_all_dc=False, name=["FDAC"]))
         commands.extend(self.rmg.current_run.register.get_commands("RunMode"))
         self.rmg.current_run.register_utils.send_commands(commands)
+    def get_fe_fdac(self,pix,fei4=True):
+        tdac_pixel_mask=self.rmg.current_run.register.get_pixel_register_value('FDAC')
+        if isinstance(pix,str):
+            if pix=="all":
+                if fei4==False:
+                    pass  ## TODO convert..
+                return tdac_pixel_mask 
+        else:
+            ret=[]
+            if isinstance(pix[0], int):
+                pix=[pix]
+            for p in pix:
+               if fei4==False:
+                   pass ## convert
+               ret.append(tdac_pixel_mask[p[0],p[1]])
+            return ret    
     def set_gdac(self,gdac):
         commands = []
         self.rmg.current_run.register.set_global_register_value("Vthin_AltFine", gdac)  # set trigger latency
@@ -117,7 +178,7 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
         commands.extend(self.rmg.current_run.register.get_commands("WrRegister", name=["Vthin_AltFine"]))
         commands.extend(self.rmg.current_run.register.get_commands("RunMode"))
         self.rmg.current_run.register_utils.send_commands(commands)
-
+        self.logger.info("set_gdac:%d"%gdac)
     def tune_fdac(self,wgt2=16):
         self.set_preamp_en("all")
         #self.set_inj_all(inj_high=0.3,inj_n=100)
@@ -153,29 +214,15 @@ class H35DEMOFei4(H35DEMO.H35DEMO):
                     arg[i]=0
                 self.set_fdac_pix(pix[i],int(arg[i]))
             np.save(f,arg)
-    def scan_gdac(self,pix,b,e,s,th=0.8,inj_high=1.5):
-        self.set_preamp_en(pix)
-        self.set_inj_en(pix)
-        self.set_mon_en(pix)
-        self.set_th(th)
-        if pix[0]%3==0:
-            self.set_global(WGT0=63,WGT1=0,WGT2=0)
-        elif pix[0]%3==1:
-            self.set_global(WGT0=0,WGT1=63,WGT2=0)
-        elif pix[0]%3==2:
-            self.set_global(WGT0=0,WGT1=0,WGT2=63)
+    def scan_gdac(self,pix,b,e,s,inj_high=2,run_conf={"trigger_latency":235,
+                                                      "trigger_delay":18,
+                                                      'scan_timeout':10}):
+        self.configure(inj=pix,mon="none")
         self.set_inj_all(inj_n=100,inj_high=inj_high)
-        for g in range(38,110,1):
-            self.run_exttrigger(run_conf={"gdac":g})
-            try:
-               dat=H35DEMO_util.load_fei4data(H35DEMO_util.get_fei4file(),row_offset=self.row_offset)
-               feix=H35DEMO_util.H35DEMO2fei4(pix,ab="False")
-               s="fepix=[%d,%d] cnt=%d"%(fepix[0],fepix[1],dat[fepix[0],fepix[1]])
-               if dat[fepix[0],fepix[1]]==0:
-                    break
-            except:
-               s="no data"
-            c.logger("run_exttrigger() %d %d %d %s"%(i,j,s))
+        for g in range(b,e,s):
+            self.set_gdac(g)
+            self.run_exttrigger(run_conf=run_conf)
+        
 
     def tune_tdac_fei4(self,th=0.77,LSBdacL=63):
         th=0.78
