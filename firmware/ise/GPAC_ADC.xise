@@ -15,16 +15,24 @@
   <version xil_pn:ise_version="14.6" xil_pn:schema_version="2"/>
 
   <files>
-    <file xil_pn:name="../src/H35DEMO.ucf" xil_pn:type="FILE_UCF">
+    <file xil_pn:name="../src/GPAC_ADC.ucf" xil_pn:type="FILE_UCF">
       <association xil_pn:name="Implementation" xil_pn:seqID="0"/>
     </file>
-    <file xil_pn:name="../src/H35DEMO.v" xil_pn:type="FILE_VERILOG">
+    <file xil_pn:name="../src/GPAC_ADC_demo.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="44"/>
+<<<<<<< HEAD:firmware/ise/H35DEMO.xise
       <association xil_pn:name="Implementation" xil_pn:seqID="42"/>
     </file>
     <file xil_pn:name="../../../basil/basil/firmware/modules/gpio/gpio_core.v" xil_pn:type="FILE_VERILOG">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="55"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="22"/>
+=======
+      <association xil_pn:name="Implementation" xil_pn:seqID="23"/>
+    </file>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/gpio/gpio_core.v" xil_pn:type="FILE_VERILOG">
+      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="55"/>
+      <association xil_pn:name="Implementation" xil_pn:seqID="12"/>
+>>>>>>> 4c34dc663f39754bd1ad38353b1e7e0dee5b8e32:firmware/ise/GPAC_ADC.xise
     </file>
   </files>
 
@@ -131,9 +139,9 @@
     <property xil_pn:name="Ignore User Timing Constraints Map" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Ignore User Timing Constraints Par" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Ignore Version Check" xil_pn:value="false" xil_pn:valueState="default"/>
-    <property xil_pn:name="Implementation Top" xil_pn:value="Module|H35DEMO" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Implementation Top File" xil_pn:value="../src/H35DEMO.v" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Implementation Top Instance Path" xil_pn:value="/H35DEMO" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Implementation Top" xil_pn:value="Module|GPAC_ADC_demo" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Implementation Top File" xil_pn:value="../src/GPAC_ADC_demo.v" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Implementation Top Instance Path" xil_pn:value="/GPAC_ADC_demo" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Include 'uselib Directive in Verilog File" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Include SIMPRIM Models in Verilog File" xil_pn:value="false" xil_pn:valueState="default"/>
     <property xil_pn:name="Include UNISIM Models in Verilog File" xil_pn:value="false" xil_pn:valueState="default"/>
@@ -340,12 +348,15 @@
     <file xil_pn:name="../../../basil/basil/firmware/modules/spi/blk_mem_gen_8_to_1_2k.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/sram_fifo/sram_fifo_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/sram_fifo/sram_fifo.v" xil_pn:type="FILE_VERILOG"/>
+<<<<<<< HEAD:firmware/ise/H35DEMO.xise
     <file xil_pn:name="../../../basil/basil/firmware/modules/fei4_rx/fei4_rx_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/fei4_rx/receiver_logic.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/fei4_rx/sync_master.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/fei4_rx/rec_sync.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/fei4_rx/decode_8b10b.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/fei4_rx/fei4_rx.v" xil_pn:type="FILE_VERILOG"/>
+=======
+>>>>>>> 4c34dc663f39754bd1ad38353b1e7e0dee5b8e32:firmware/ise/GPAC_ADC.xise
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/flag_domain_crossing.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/cdc_syncfifo.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/generic_fifo.v" xil_pn:type="FILE_VERILOG"/>
@@ -354,10 +365,15 @@
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/CG_MOD_pos.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/clock_divider.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/fx2_to_bus.v" xil_pn:type="FILE_VERILOG"/>
+<<<<<<< HEAD:firmware/ise/H35DEMO.xise
+=======
+    <file xil_pn:name="../../../basil/basil/firmware/modules/utils/reset_gen.v" xil_pn:type="FILE_VERILOG"/>
+>>>>>>> 4c34dc663f39754bd1ad38353b1e7e0dee5b8e32:firmware/ise/GPAC_ADC.xise
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/bus_to_ip.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/cdc_reset_sync.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/pulse_gen_rising.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/3_stage_synchronizer.v" xil_pn:type="FILE_VERILOG"/>
+<<<<<<< HEAD:firmware/ise/H35DEMO.xise
     <file xil_pn:name="../../../basil/basil/firmware/modules/pulse_gen/pulse_gen.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/pulse_gen/pulse_gen_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/tlu/tlu_controller.v" xil_pn:type="FILE_VERILOG"/>
@@ -370,6 +386,11 @@
     <file xil_pn:name="../../../basil/basil/firmware/modules/cmd_seq/cmd_seq_core.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/fast_spi_rx/fast_spi_rx.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/fast_spi_rx/fast_spi_rx_core.v" xil_pn:type="FILE_VERILOG"/>
+=======
+    <file xil_pn:name="../../../basil/basil/firmware/modules/gpac_adc_rx/gpac_adc_rx.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/gpac_adc_rx/gpac_adc_rx_core.v" xil_pn:type="FILE_VERILOG"/>
+    <file xil_pn:name="../../../basil/basil/firmware/modules/gpac_adc_rx/gpac_adc_iobuf.v" xil_pn:type="FILE_VERILOG"/>
+>>>>>>> 4c34dc663f39754bd1ad38353b1e7e0dee5b8e32:firmware/ise/GPAC_ADC.xise
     <file xil_pn:name="../../../basil/basil/firmware/modules/rrp_arbiter/rrp_arbiter.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/IDDR_s3.v" xil_pn:type="FILE_VERILOG"/>
     <file xil_pn:name="../../../basil/basil/firmware/modules/utils/ODDR_s3.v" xil_pn:type="FILE_VERILOG"/>
