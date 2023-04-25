@@ -17,7 +17,7 @@ class Log():
 
         self.logfile=logfile
     def info(self,s):
-        print(s)
+        print s
         s.replace("\n","")
         with open(self.logfile,"a") as f:
             f.write("%s %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),s))
@@ -33,12 +33,12 @@ class Log():
                 pass
     def show(self,dat):
         ### TODO format nicely
-        print("CCPD_CONF_A:dummy=",dat['CCPD_CONF_A'][:80])
-        print("           :col=",dat['CCPD_CONF_A'][80:1280])
-        print("           :row=",dat['CCPD_CONF_A'][1280:1280+23])
-        print("           :dac=",dat['CCPD_CONF_A'][1280+23:])
-        print("Injection:dealy=%d,width=%d,repeat=%d,en=%d,voltages=%s"%(dat['CCPD_INJ']["DELAY"],dat['CCPD_INJ']["WIDTH"]
-                    ,dat['CCPD_INJ']["REPEAT"],dat['CCPD_INJ']["EN"],dat['CCPD_INJ_VOLTAGE']))
+        print "CCPD_CONF_A:dummy=",dat['CCPD_CONF_A'][:80]
+        print "           :col=",dat['CCPD_CONF_A'][80:1280]
+        print "           :row=",dat['CCPD_CONF_A'][1280:1280+23]
+        print "           :dac=",dat['CCPD_CONF_A'][1280+23:]
+        print "Injection:dealy=%d,width=%d,repeat=%d,en=%d,voltages=%s"%(dat['CCPD_INJ']["DELAY"],dat['CCPD_INJ']["WIDTH"]
+                    ,dat['CCPD_INJ']["REPEAT"],dat['CCPD_INJ']["EN"],dat['CCPD_INJ_VOLTAGE'])
         with open(self.logfile,"a") as f:
             f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_CONF_A',dat['CCPD_CONF_A']))
             f.write("%s %s: %s\n"%(time.strftime("%Y/%m/%d-%H:%M:%S"),'CCPD_GATE',dat['CCPD_GATE']))  
@@ -161,7 +161,7 @@ class H35DEMO():
     def configure(self,**karg):
         """ anabuf=col,inj=[pix],ampout=row,BLR=15,VNBias=1,VNFB=5,VNLogic=10,VPLoad=10,VNSF=30,VP=30,VPAB=20
         """
-        for  k,v in karg.items():
+        for  k,v in karg.iteritems():
             col=[0]*300
             if "anabuf" in k:
                 if isinstance(v,int):

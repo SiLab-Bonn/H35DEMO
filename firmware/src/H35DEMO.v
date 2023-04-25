@@ -697,7 +697,7 @@ fast_spi_rx
 #(
     .BASEADDR(CCPD_RX_ADDR_BASEADDR),
     .HIGHADDR(CCPD_RX_ADDR_HIGHADDR),    
-    .IDENTYFIER(4'b0001)
+    .IDENTIFIER(4'b0001)
 ) i_ccpd_fast_spi_rx_addr(
     .BUS_CLK(BUS_CLK),
     .BUS_RST(BUS_RST),
@@ -722,7 +722,7 @@ fast_spi_rx
 #(
     .BASEADDR(CCPD_RX_TIMESTAMP_BASEADDR),
     .HIGHADDR(CCPD_RX_TIMESTAMP_HIGHADDR),     
-    .IDENTYFIER(4'b0010)
+    .IDENTIFIER(4'b0010)
 ) i_ccpd_fast_spi_rx_timestamp(
     .BUS_CLK(BUS_CLK),
     .BUS_RST(BUS_RST),
